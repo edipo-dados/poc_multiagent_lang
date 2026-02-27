@@ -1,0 +1,4 @@
+# file: C:\Users\edipo\multi-agent-ia\backend\orchestrator\graph.py
+# hypothesis_version: 6.151.9
+
+['CodeReader', 'Impact', 'KiroPrompt', 'Sentinel', 'SpecGenerator', 'Translator', 'code_reader', 'error', 'impact', 'kiro_prompt', 'sentinel', 'spec_generator', 'translator']

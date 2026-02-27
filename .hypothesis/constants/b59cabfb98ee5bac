@@ -1,0 +1,4 @@
+# file: C:\Users\edipo\multi-agent-ia\backend\models\impact.py
+# hypothesis_version: 6.151.9
+
+[0.0, 1.0, 'api_contract', 'business_logic', 'high', 'low', 'medium', 'schema_change', 'validation']

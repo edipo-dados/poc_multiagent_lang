@@ -1,0 +1,4 @@
+# file: C:\Users\edipo\multi-agent-ia\backend\services\llm.py
+# hypothesis_version: 6.151.9
+
+[1000, 'LLM_TYPE', 'OLLAMA_BASE_URL', 'OLLAMA_MODEL', 'llama2', 'local', 'model', 'num_predict', 'ollama', 'options', 'prompt', 'response', 'stream']

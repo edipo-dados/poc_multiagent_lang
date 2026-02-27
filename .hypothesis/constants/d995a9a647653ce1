@@ -1,0 +1,4 @@
+# file: C:\Users\edipo\multi-agent-ia\backend\services\vector_store.py
+# hypothesis_version: 6.151.9
+
+[0.5, 200, 'content', 'embedding', 'file_path', 'score', 'updated_at']

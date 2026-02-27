@@ -1,0 +1,47 @@
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+
+# Testing
+.pytest_cache
+.hypothesis
+.coverage
+htmlcov
+.tox
+tests/
+examples/
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Scripts
+scripts/

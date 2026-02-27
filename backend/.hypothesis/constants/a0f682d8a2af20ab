@@ -1,0 +1,4 @@
+# file: C:\Users\edipo\multi-agent-ia\backend\models\__init__.py
+# hypothesis_version: 6.151.9
+
+['GlobalState', 'Impact', 'ImpactedFile', 'RegulatoryModel']

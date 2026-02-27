@@ -1,0 +1,16 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+sqlalchemy[asyncio]==2.0.23
+asyncpg==0.29.0
+pgvector==0.2.4
+pydantic==2.5.0
+pydantic-settings==2.1.0
+langgraph==0.0.26
+langchain>=0.1.0,<0.2.0
+langchain-core>=0.1.25,<0.2.0
+sentence-transformers>=2.3.0
+numpy==1.24.3
+requests==2.31.0
+python-multipart==0.0.6
+hypothesis==6.92.1
+pytest==7.4.3

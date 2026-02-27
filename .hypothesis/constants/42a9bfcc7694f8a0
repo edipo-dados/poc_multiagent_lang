@@ -1,0 +1,4 @@
+# file: C:\Users\edipo\multi-agent-ia\backend\agents\impact.py
+# hypothesis_version: 6.151.9
+
+[1500, ', ', '-', '- ', ':', 'ALTA', 'ALTO', 'BAIXA', 'BAIXO', 'CHANGES:', 'DESCRIPTION:', 'DESCRIÇÃO:', 'HIGH', 'IMPACTO:', 'LOW', 'MEDIA', 'MEDIUM', 'MUDANÇAS:', 'MÉDIO', 'PIX_REPO_PATH', 'SEVERIDADE:', 'SEVERITY:', 'SUGESTÕES:', 'affected_systems', 'api', 'api_contract', 'business_logic', 'changes', 'database', 'description', 'domain', 'endpoints.py', 'fake_pix_repo', 'file_path', 'high', 'low', 'medium', 'models.py', 'requirements', 'schema_change', 'schemas.py', 'services', 'utf-8', 'validation', 'validator', 'validators.py']
