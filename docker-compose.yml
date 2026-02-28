@@ -16,6 +16,18 @@ services:
       timeout: 5s
       retries: 5
 
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   backend:
     build:
       context: ./backend
@@ -26,10 +38,10 @@ services:
       - .env
     environment:
       PIX_REPO_PATH: /app/fake_pix_repo
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     volumes:
       - ./fake_pix_repo:/app/fake_pix_repo
@@ -47,3 +59,4 @@ services:
 
 volumes:
   postgres_data:
+  ollama_data:
