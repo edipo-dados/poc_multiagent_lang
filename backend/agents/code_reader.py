@@ -69,7 +69,7 @@ async def code_reader_agent(state: GlobalState) -> GlobalState:
             impacted_files = await vector_store.search_similar(
                 query_embedding=query_embedding,
                 top_k=10,
-                threshold=0.3  # Lowered threshold for better results
+                threshold=0.1  # Lower threshold to find more results
             )
         
         # Step 4: Update Global State with impacted_files
