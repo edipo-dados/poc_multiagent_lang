@@ -16,8 +16,9 @@ langchain-core>=0.3.0,<0.4.0
 langgraph>=0.2.0,<0.3.0
 langchain-ollama==0.2.0
 
-# Embeddings (CPU-only, no CUDA)
-sentence-transformers>=2.3.0
+# Embeddings (CPU-only, no CUDA) - Fixed versions for Python 3.11 compatibility
+transformers==4.36.2
+sentence-transformers==2.3.1
 
 # Utilities
 httpx==0.28.1
