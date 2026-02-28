@@ -143,7 +143,7 @@ Responda apenas com "SIM" se o texto descreve mudanças/alterações, ou "NÃO" 
 Resposta:"""
         
         try:
-            response = llm.generate(prompt, max_tokens=10)
+            response = llm.generate(prompt, max_tokens=50)
             has_changes = "sim" in response.lower()
             logger.debug(f"LLM change detection response: {response.strip()}")
         except Exception as e:
