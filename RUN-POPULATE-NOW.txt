@@ -1,0 +1,50 @@
+🔥 COMANDO CORRETO PARA POPULAR EMBEDDINGS
+===========================================
+
+NOVO SCRIPT: populate_embeddings_asyncpg.py
+(Usa asyncpg que já está instalado no container)
+
+COMANDO CORRETO:
+----------------
+docker compose exec backend python backend/scripts/populate_embeddings_asyncpg.py
+
+OU com caminho completo:
+docker compose exec backend python /app/backend/scripts/populate_embeddings_asyncpg.py
+
+OU entre no container:
+docker compose exec backend bash
+python backend/scripts/populate_embeddings_asyncpg.py
+exit
+
+VERIFICAR ESTRUTURA (se der erro):
+-----------------------------------
+docker compose exec backend ls -la /app/backend/scripts/
+
+Deve mostrar:
+- populate_embeddings_asyncpg.py
+- populate_embeddings_sync.py (antigo, precisa psycopg2)
+- create_database.py
+
+DEPOIS DE POPULAR:
+------------------
+docker compose exec postgres psql -U postgres -d regulatory_ai -c "SELECT COUNT(*) FROM code_embeddings;"
+
+Deve retornar: count = 5
+
+SAÍDA ESPERADA:
+---------------
+🔄 Populando embeddings para fake_pix_repo...
+
+  📄 Processando: api/endpoints.py
+    🔢 Gerando embedding...
+    💾 Salvando no banco...
+    ✅ Concluído (384 dimensões)
+
+  📄 Processando: api/schemas.py
+    🔢 Gerando embedding...
+    💾 Salvando no banco...
+    ✅ Concluído (384 dimensões)
+
+  ... (mais 3 arquivos)
+
+✅ Total de embeddings no banco: 5
