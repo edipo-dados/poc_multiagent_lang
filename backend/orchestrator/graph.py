@@ -44,19 +44,8 @@ def code_reader_agent(state: GlobalState) -> GlobalState:
     Returns:
         Updated GlobalState with impacted_files
     """
-    # Get or create event loop
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # If loop is already running, create a task
-            import nest_asyncio
-            nest_asyncio.apply()
-            return loop.run_until_complete(code_reader_agent_async(state))
-        else:
-            return loop.run_until_complete(code_reader_agent_async(state))
-    except RuntimeError:
-        # No event loop exists, create one
-        return asyncio.run(code_reader_agent_async(state))
+    # Run the async function in a new event loop
+    return asyncio.run(code_reader_agent_async(state))
 
 
 def spec_generator_agent(state: GlobalState) -> GlobalState:
