@@ -23,7 +23,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, UTC
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -135,7 +135,10 @@ class AuditResponse(BaseModel):
 
 # Request/Response Models
 @app.post("/analyze", response_model=AnalyzeResponse, status_code=status.HTTP_200_OK)
-async def analyze_regulatory_text(request: AnalyzeRequest) -> AnalyzeResponse:
+async def analyze_regulatory_text(
+    request: AnalyzeRequest,
+    x_gemini_api_key: Optional[str] = Header(None, alias="X-Gemini-API-Key")
+) -> AnalyzeResponse:
     """
     Analyze regulatory text and return complete results.
     
@@ -184,6 +187,12 @@ async def analyze_regulatory_text(request: AnalyzeRequest) -> AnalyzeResponse:
     )
     
     try:
+        # Override Gemini API key if provided in header
+        if x_gemini_api_key:
+            logger.info("Using custom Gemini API key from request header")
+            import os
+            os.environ['GEMINI_API_KEY'] = x_gemini_api_key
+        
         # Execute agent pipeline
         logger.info("Initializing LangGraph orchestrator")
         orchestrator = RegulatoryAnalysisGraph()

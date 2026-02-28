@@ -21,7 +21,7 @@ if 'initialized' not in st.session_state:
     st.session_state.analysis_result = None
 
 
-def analyze_text(regulatory_text: str) -> dict:
+def analyze_text(regulatory_text: str, gemini_api_key: Optional[str] = None) -> dict:
     """
     Call backend API to analyze regulatory text.
     
@@ -37,9 +37,18 @@ def analyze_text(regulatory_text: str) -> dict:
         Exception: For other errors
     """
     try:
+        # Prepare request payload
+        payload = {"regulatory_text": regulatory_text}
+        
+        # Add custom headers if API key is provided
+        headers = {'Content-Type': 'application/json'}
+        if gemini_api_key:
+            headers['X-Gemini-API-Key'] = gemini_api_key
+        
         response = requests.post(
             f"{BACKEND_URL}/analyze",
-            json={"regulatory_text": regulatory_text},
+            json=payload,
+            headers=headers,
             timeout=REQUEST_TIMEOUT
         )
         
@@ -68,6 +77,29 @@ def render_input_section():
     usando uma arquitetura multi-agente determinística.
     """)
     
+    # Gemini API Key input (collapsible)
+    with st.expander("⚙️ Configuração da API Key (Gemini)", expanded=False):
+        st.markdown("""
+        Para usar este sistema, você precisa de uma API key do Google Gemini.
+        
+        **Como obter:**
+        1. Acesse [Google AI Studio](https://aistudio.google.com/app/apikey)
+        2. Clique em "Create API Key"
+        3. Cole a key abaixo
+        """)
+        
+        gemini_api_key = st.text_input(
+            "Gemini API Key",
+            type="password",
+            placeholder="AIzaSy...",
+            help="Sua chave de API do Google Gemini. Será usada apenas para esta sessão."
+        )
+        
+        if gemini_api_key:
+            st.success("✅ API Key configurada!")
+        else:
+            st.warning("⚠️ API Key não configurada. A análise usará a key padrão do servidor (se disponível).")
+    
     # Text input area
     regulatory_text = st.text_area(
         "Texto Regulatório",
@@ -81,7 +113,7 @@ def render_input_section():
     with col1:
         analyze_button = st.button("Analisar Impacto", type="primary", use_container_width=True)
     
-    return regulatory_text, analyze_button
+    return regulatory_text, analyze_button, gemini_api_key
 
 
 def render_regulatory_model_tab(regulatory_model: dict):
@@ -312,7 +344,7 @@ def main():
         st.session_state['error'] = None
     
     # Render input section
-    regulatory_text, analyze_button = render_input_section()
+    regulatory_text, analyze_button, gemini_api_key = render_input_section()
     
     # Handle analysis submission
     if analyze_button:
@@ -329,7 +361,7 @@ def main():
             # Show loading indicator and perform analysis
             with st.spinner("🔄 Analisando... Isso pode levar alguns segundos."):
                 try:
-                    results = analyze_text(regulatory_text)
+                    results = analyze_text(regulatory_text, gemini_api_key)
                     st.session_state['results'] = results
                     st.session_state['error'] = None
                     st.success("✅ Análise concluída com sucesso!")
