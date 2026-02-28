@@ -40,8 +40,8 @@ def code_reader_agent(state: GlobalState) -> GlobalState:
     """
     CodeReader Agent - Identify relevant code files.
     
-    Synchronous wrapper that runs the async code_reader_agent.
-    Uses nest_asyncio to handle nested event loops.
+    Synchronous wrapper that runs the async code_reader_agent in a thread.
+    This avoids event loop conflicts with uvloop.
     
     Args:
         state: GlobalState containing regulatory_model
@@ -50,19 +50,23 @@ def code_reader_agent(state: GlobalState) -> GlobalState:
         Updated GlobalState with impacted_files list
     """
     try:
-        import nest_asyncio
-        nest_asyncio.apply()
+        import asyncio
+        from concurrent.futures import ThreadPoolExecutor
         
-        # Get or create event loop
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
+        def run_in_thread():
+            # Create new event loop in thread
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(code_reader_agent_async(state))
+            finally:
+                loop.close()
         
-        # Run async code_reader_agent
-        result = loop.run_until_complete(code_reader_agent_async(state))
-        return result
+        # Run in thread pool
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(run_in_thread)
+            result = future.result(timeout=30)  # 30 second timeout
+            return result
         
     except Exception as e:
         logger.error(f"CodeReader Agent wrapper failed: {str(e)}", exc_info=True)
