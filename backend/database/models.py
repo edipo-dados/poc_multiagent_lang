@@ -6,12 +6,22 @@ This module defines the database schema for:
 - AuditLog: Complete execution history for compliance tracking
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, func
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, func, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from pgvector.sqlalchemy import Vector
+import os
 
 Base = declarative_base()
+
+# Detectar tipo de banco para usar tipo JSON apropriado
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./regulatory_ai.db")
+is_postgres = "postgresql" in DATABASE_URL.lower()
+
+# Usar JSONB para PostgreSQL, JSON para SQLite
+if is_postgres:
+    from sqlalchemy.dialects.postgresql import JSONB as JSONType
+else:
+    JSONType = JSON
 
 
 class Embedding(Base):
@@ -45,9 +55,9 @@ class AuditLog(Base):
     raw_text = Column(Text, nullable=False)
     change_detected = Column(Boolean, nullable=True)
     risk_level = Column(String(10), nullable=True, index=True)
-    structured_model = Column(JSONB, nullable=True)
-    impacted_files = Column(JSONB, nullable=True)
-    impact_analysis = Column(JSONB, nullable=True)
+    structured_model = Column(JSONType, nullable=True)
+    impacted_files = Column(JSONType, nullable=True)
+    impact_analysis = Column(JSONType, nullable=True)
     technical_spec = Column(Text, nullable=True)
     kiro_prompt = Column(Text, nullable=True)
     error = Column(Text, nullable=True)
