@@ -1,0 +1,142 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  🤖 USAR OPENAI API - Mais rápido que Ollama                 ║
+╚═══════════════════════════════════════════════════════════════╝
+
+OpenAI é muito mais rápido que Ollama local, mas tem custo por uso.
+
+═══════════════════════════════════════════════════════════════
+📋 PASSO 1: Obter API Key da OpenAI
+═══════════════════════════════════════════════════════════════
+
+1. Acesse: https://platform.openai.com/api-keys
+2. Faça login ou crie uma conta
+3. Clique em "Create new secret key"
+4. Copie a chave (começa com sk-proj-...)
+5. IMPORTANTE: Guarde em local seguro, não compartilhe!
+
+═══════════════════════════════════════════════════════════════
+🚀 PASSO 2: Atualizar .env no EC2
+═══════════════════════════════════════════════════════════════
+
+Execute no EC2:
+
+cat > .env << 'EOF'
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regulatory_ai
+LLM_TYPE=openai
+OPENAI_API_KEY=SUA_CHAVE_AQUI
+OPENAI_MODEL=gpt-3.5-turbo
+OPENAI_BASE_URL=https://api.openai.com/v1
+EOF
+
+IMPORTANTE: Substitua "SUA_CHAVE_AQUI" pela sua chave real!
+
+═══════════════════════════════════════════════════════════════
+🔄 PASSO 3: Reiniciar Backend
+═══════════════════════════════════════════════════════════════
+
+docker compose restart backend
+sleep 10
+
+═══════════════════════════════════════════════════════════════
+🧪 PASSO 4: Testar
+═══════════════════════════════════════════════════════════════
+
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024 - Teste de regulação bancária sobre limites de crédito","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+✅ RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+- Resposta em 2-5 segundos (muito mais rápido que Ollama!)
+- Translator Agent deve funcionar sem timeout
+- Logs devem mostrar: "Initialized OpenAILLM with model=gpt-3.5-turbo"
+
+═══════════════════════════════════════════════════════════════
+💰 CUSTOS ESTIMADOS
+═══════════════════════════════════════════════════════════════
+
+GPT-3.5-Turbo (recomendado para testes):
+- Input: $0.50 / 1M tokens
+- Output: $1.50 / 1M tokens
+- Custo por análise: ~$0.001-0.005 (muito barato!)
+
+GPT-4 (melhor qualidade, mais caro):
+- Input: $30 / 1M tokens  
+- Output: $60 / 1M tokens
+- Custo por análise: ~$0.05-0.10
+
+Para usar GPT-4:
+OPENAI_MODEL=gpt-4
+
+═══════════════════════════════════════════════════════════════
+🔍 VERIFICAR LOGS
+═══════════════════════════════════════════════════════════════
+
+docker compose logs backend --tail 50 | grep -E "(OpenAI|Translator|Sentinel)"
+
+Deve mostrar:
+✅ Initialized OpenAILLM with model=gpt-3.5-turbo
+✅ Sentinel Agent completed successfully
+✅ Translator Agent completed successfully (sem timeout!)
+
+═══════════════════════════════════════════════════════════════
+🔄 VOLTAR PARA OLLAMA
+═══════════════════════════════════════════════════════════════
+
+Se quiser voltar para Ollama (grátis mas lento):
+
+cat > .env << 'EOF'
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regulatory_ai
+LLM_TYPE=ollama
+OLLAMA_BASE_URL=http://172.31.5.241:11434
+OLLAMA_MODEL=llama2
+EOF
+
+docker compose restart backend
+
+═══════════════════════════════════════════════════════════════
+⚠️ SEGURANÇA
+═══════════════════════════════════════════════════════════════
+
+1. NUNCA commite .env no git (já está no .gitignore)
+2. NUNCA compartilhe sua API key
+3. Configure limites de uso no dashboard da OpenAI
+4. Monitore uso em: https://platform.openai.com/usage
+
+═══════════════════════════════════════════════════════════════
+🐛 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+Erro: "OPENAI_API_KEY environment variable is required"
+→ Verifique se a chave está no .env
+→ Reinicie o backend: docker compose restart backend
+
+Erro: "Invalid API key"
+→ Verifique se copiou a chave completa
+→ Gere uma nova chave no dashboard da OpenAI
+
+Erro: "Rate limit exceeded"
+→ Você atingiu o limite de requisições
+→ Aguarde alguns minutos ou upgrade seu plano
+
+═══════════════════════════════════════════════════════════════
+📊 COMPARAÇÃO: Ollama vs OpenAI
+═══════════════════════════════════════════════════════════════
+
+Ollama (llama2 em t3.small):
+✅ Grátis
+❌ Lento (60+ segundos, timeout)
+❌ Usa CPU/RAM do servidor
+❌ Qualidade média
+
+OpenAI (gpt-3.5-turbo):
+✅ Muito rápido (2-5 segundos)
+✅ Não usa recursos do servidor
+✅ Qualidade excelente
+❌ Custa dinheiro (~$0.001-0.005 por análise)
+
+RECOMENDAÇÃO: Use OpenAI para produção/demo, Ollama para dev local.
+
+═══════════════════════════════════════════════════════════════

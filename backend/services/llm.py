@@ -2,7 +2,7 @@
 LLM Provider Interface and Implementations
 
 This module provides a protocol-based interface for LLM providers and concrete
-implementations for Ollama and a fallback local LLM.
+implementations for Ollama, OpenAI, and a fallback local LLM.
 """
 
 import os
@@ -109,6 +109,62 @@ class LocalLLM:
         )
 
 
+class OpenAILLM:
+    """LLM provider using OpenAI API."""
+    
+    def __init__(self, api_key: str, model: str = "gpt-3.5-turbo", base_url: str = "https://api.openai.com/v1"):
+        """
+        Initialize OpenAI LLM provider.
+        
+        Args:
+            api_key: OpenAI API key
+            model: Model name to use (default: gpt-3.5-turbo)
+            base_url: Base URL for OpenAI API (default: https://api.openai.com/v1)
+        """
+        self.api_key = api_key
+        self.model = model
+        self.base_url = base_url
+        logger.info(f"Initialized OpenAILLM with model={model}")
+    
+    def generate(self, prompt: str, max_tokens: int = 1000) -> str:
+        """
+        Generate text using OpenAI API.
+        
+        Args:
+            prompt: The input prompt text
+            max_tokens: Maximum number of tokens to generate
+            
+        Returns:
+            Generated text response
+            
+        Raises:
+            requests.RequestException: If API call fails
+        """
+        try:
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": self.model,
+                    "messages": [
+                        {"role": "user", "content": prompt}
+                    ],
+                    "max_tokens": max_tokens,
+                    "temperature": 0.7
+                },
+                timeout=30
+            )
+            response.raise_for_status()
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+        except requests.RequestException as e:
+            logger.error(f"OpenAI API call failed: {e}")
+            raise
+
+
 def get_llm() -> LLMProvider:
     """
     Factory function to get the appropriate LLM provider.
@@ -117,15 +173,22 @@ def get_llm() -> LLMProvider:
     implementation. Defaults to "ollama" if not set.
     
     Environment Variables:
-        LLM_TYPE: Type of LLM to use ("ollama" or "local", default: "ollama")
-        OLLAMA_BASE_URL: Base URL for Ollama API (default: http://localhost:11434)
-        OLLAMA_MODEL: Model name for Ollama (default: llama2)
+        LLM_TYPE: Type of LLM to use ("ollama", "openai", or "local", default: "ollama")
+        
+        For Ollama:
+            OLLAMA_BASE_URL: Base URL for Ollama API (default: http://localhost:11434)
+            OLLAMA_MODEL: Model name for Ollama (default: llama2)
+        
+        For OpenAI:
+            OPENAI_API_KEY: OpenAI API key (required)
+            OPENAI_MODEL: Model name (default: gpt-3.5-turbo)
+            OPENAI_BASE_URL: Base URL (default: https://api.openai.com/v1)
     
     Returns:
         LLMProvider instance
         
     Raises:
-        ValueError: If LLM_TYPE is not recognized
+        ValueError: If LLM_TYPE is not recognized or required env vars are missing
     """
     llm_type = os.getenv("LLM_TYPE", "ollama").lower()
     
@@ -133,7 +196,14 @@ def get_llm() -> LLMProvider:
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         model = os.getenv("OLLAMA_MODEL", "llama2")
         return OllamaLLM(base_url=base_url, model=model)
+    elif llm_type == "openai":
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is required for OpenAI LLM")
+        model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+        base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        return OpenAILLM(api_key=api_key, model=model, base_url=base_url)
     elif llm_type == "local":
         return LocalLLM()
     else:
-        raise ValueError(f"Unknown LLM type: {llm_type}. Must be 'ollama' or 'local'")
+        raise ValueError(f"Unknown LLM type: {llm_type}. Must be 'ollama', 'openai', or 'local'")
