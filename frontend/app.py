@@ -293,6 +293,16 @@ def render_graph_visualization_tab(results: dict):
         """
         
         components.html(mermaid_html, height=600, scrolling=True)
+        
+        # Fallback: Show Mermaid code as text
+        with st.expander("📝 Ver código Mermaid (se o diagrama não carregar)"):
+            st.code(graph_visualization, language="mermaid")
+            st.markdown("""
+            **Dica:** Se o diagrama não aparecer acima, você pode:
+            1. Copiar o código acima
+            2. Colar em [Mermaid Live Editor](https://mermaid.live)
+            3. Visualizar o diagrama lá
+            """)
     else:
         st.info("Visualização do grafo não disponível.")
 
