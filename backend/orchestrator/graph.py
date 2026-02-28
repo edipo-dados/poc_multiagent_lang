@@ -143,7 +143,7 @@ class RegulatoryAnalysisGraph:
         self.graph.add_node("code_reader", self._wrap_agent(code_reader_agent, "CodeReader"))
         self.graph.add_node("impact", self._wrap_agent(impact_agent, "Impact"))
         self.graph.add_node("spec_generator", self._wrap_agent(spec_generator_agent, "SpecGenerator"))
-        self.graph.add_node("kiro_prompt", self._wrap_agent(kiro_prompt_agent_wrapper, "KiroPrompt"))
+        self.graph.add_node("kiro_prompt_gen", self._wrap_agent(kiro_prompt_agent_wrapper, "KiroPrompt"))
         
         # Set entry point
         self.graph.set_entry_point("sentinel")
@@ -153,8 +153,8 @@ class RegulatoryAnalysisGraph:
         self.graph.add_edge("translator", "code_reader")
         self.graph.add_edge("code_reader", "impact")
         self.graph.add_edge("impact", "spec_generator")
-        self.graph.add_edge("spec_generator", "kiro_prompt")
-        self.graph.add_edge("kiro_prompt", END)
+        self.graph.add_edge("spec_generator", "kiro_prompt_gen")
+        self.graph.add_edge("kiro_prompt_gen", END)
         
         logger.debug("Graph structure built successfully")
     
