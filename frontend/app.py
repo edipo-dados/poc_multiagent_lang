@@ -217,24 +217,50 @@ def render_graph_visualization_tab(results: dict):
         # Use Streamlit components to render Mermaid
         import streamlit.components.v1 as components
         
+        # Escape the Mermaid code properly for HTML
+        mermaid_code = graph_visualization.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        
         mermaid_html = f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-            <script>
-                mermaid.initialize({{ startOnLoad: true, theme: 'default' }});
+            <meta charset="UTF-8">
+            <script type="module">
+                import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+                mermaid.initialize({{ 
+                    startOnLoad: true, 
+                    theme: 'default',
+                    flowchart: {{
+                        useMaxWidth: true,
+                        htmlLabels: true,
+                        curve: 'basis'
+                    }}
+                }});
             </script>
+            <style>
+                body {{
+                    margin: 0;
+                    padding: 20px;
+                    background: white;
+                    font-family: Arial, sans-serif;
+                }}
+                .mermaid {{
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 400px;
+                }}
+            </style>
         </head>
         <body>
-            <div class="mermaid">
-{graph_visualization}
-            </div>
+            <pre class="mermaid">
+{mermaid_code}
+            </pre>
         </body>
         </html>
         """
         
-        components.html(mermaid_html, height=500, scrolling=True)
+        components.html(mermaid_html, height=600, scrolling=True)
     else:
         st.info("Visualização do grafo não disponível.")
 
