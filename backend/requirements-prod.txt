@@ -1,0 +1,23 @@
+# Production requirements (optimized for size)
+# Core
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.5
+python-dotenv==1.0.1
+
+# Database
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.31.0
+pgvector==0.3.6
+
+# LLM & AI
+langchain>=0.3.0,<0.4.0
+langchain-core>=0.3.0,<0.4.0
+langgraph>=0.2.0,<0.3.0
+langchain-ollama==0.2.0
+
+# Embeddings (CPU-only, no CUDA)
+sentence-transformers>=2.3.0
+
+# Utilities
+httpx==0.28.1

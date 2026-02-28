@@ -48,6 +48,9 @@ class AuditService:
         Requirements: 12.1, 12.2, 12.3, 12.4
         """
         # Create audit log entry from Global State
+        # Convert timezone-aware datetime to naive for PostgreSQL
+        timestamp_naive = state.execution_timestamp.replace(tzinfo=None) if state.execution_timestamp.tzinfo else state.execution_timestamp
+        
         audit_entry = AuditLog(
             execution_id=state.execution_id,
             raw_text=state.raw_regulatory_text,
@@ -59,7 +62,7 @@ class AuditService:
             technical_spec=state.technical_spec,
             kiro_prompt=state.kiro_prompt,
             error=state.error,
-            timestamp=state.execution_timestamp
+            timestamp=timestamp_naive
         )
         
         # Add to session and commit

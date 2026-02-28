@@ -13,6 +13,10 @@ Endpoints:
 Requirements: 1.3, 12.1, 14.4
 """
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 import logging
 import uuid
 from contextlib import asynccontextmanager

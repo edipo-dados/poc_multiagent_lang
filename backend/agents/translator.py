@@ -107,12 +107,14 @@ Extraia as seguintes informações e retorne APENAS um objeto JSON válido (sem 
   "affected_systems": ["Sistema 1", "Sistema 2", "..."]
 }}
 
-Instruções:
+Instruções IMPORTANTES:
 - title: Crie um título conciso (máximo 100 caracteres)
 - description: Resuma o propósito e escopo da regulação
 - requirements: Liste itens acionáveis específicos (use verbos como "deve", "precisa")
-- deadlines: Extraia todas as datas mencionadas no formato YYYY-MM-DD
+- deadlines: SEMPRE inclua AMBOS "date" (formato YYYY-MM-DD) E "description" para cada prazo
+  Exemplo correto: {{"date": "2024-11-10", "description": "Prazo para implementação"}}
 - affected_systems: Identifique sistemas mencionados (ex: "Pix", "pagamentos", "transferências")
+- Se não houver prazos, use lista vazia: "deadlines": []
 
 JSON:"""
 
@@ -157,7 +159,8 @@ def _extract_json_from_response(response: str) -> dict:
     """
     # Try to parse the entire response first
     try:
-        return json.loads(response.strip())
+        data = json.loads(response.strip())
+        return _fix_deadline_format(data)
     except json.JSONDecodeError:
         pass
     
@@ -168,12 +171,45 @@ def _extract_json_from_response(response: str) -> dict:
     if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
         json_str = response[start_idx:end_idx + 1]
         try:
-            return json.loads(json_str)
+            data = json.loads(json_str)
+            return _fix_deadline_format(data)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse extracted JSON: {e}")
             raise ValueError(f"Could not parse JSON from LLM response: {e}")
     
     raise ValueError("No valid JSON object found in LLM response")
+
+
+def _fix_deadline_format(data: dict) -> dict:
+    """
+    Fix deadline format to ensure all deadlines have 'date' and 'description'.
+    
+    Args:
+        data: Parsed JSON data
+        
+    Returns:
+        Fixed JSON data with proper deadline format
+    """
+    if "deadlines" in data and isinstance(data["deadlines"], list):
+        fixed_deadlines = []
+        for deadline in data["deadlines"]:
+            if isinstance(deadline, dict):
+                # Ensure both keys exist
+                if "date" in deadline and "description" not in deadline:
+                    deadline["description"] = "Prazo não especificado"
+                elif "description" in deadline and "date" not in deadline:
+                    deadline["date"] = "2024-12-31"  # Default date
+                elif "date" not in deadline and "description" not in deadline:
+                    continue  # Skip invalid deadline
+                fixed_deadlines.append(deadline)
+            elif isinstance(deadline, str):
+                # If deadline is just a string (date), convert to proper format
+                fixed_deadlines.append({
+                    "date": deadline,
+                    "description": "Prazo não especificado"
+                })
+        data["deadlines"] = fixed_deadlines
+    return data
 
 
 def _validate_regulatory_model(model: RegulatoryModel) -> None:

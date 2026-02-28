@@ -3,21 +3,23 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies (cached layer)
-RUN apt-get update && apt-get install -y \
+# Install system dependencies (minimal)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (cached if unchanged)
-COPY requirements.txt .
+# Copy production requirements
+COPY requirements-prod.txt .
 
-# Install Python dependencies with cache mount
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements.txt
+# Install PyTorch CPU-only first (much smaller - ~200MB vs 5GB CUDA)
+RUN pip install --no-cache-dir \
+    torch==2.1.0 --index-url https://download.pytorch.org/whl/cpu
 
-# Copy all application code to backend directory
-# .dockerignore will exclude tests, examples, venv, etc.
+# Install other dependencies
+RUN pip install --no-cache-dir -r requirements-prod.txt
+
+# Copy application code
 COPY . ./backend
 
 # Set PYTHONPATH

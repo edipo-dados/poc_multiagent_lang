@@ -15,6 +15,11 @@ from typing import Optional
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 REQUEST_TIMEOUT = 120  # 2 minutes for long-running analysis
 
+# Initialize session state
+if 'initialized' not in st.session_state:
+    st.session_state.initialized = True
+    st.session_state.analysis_result = None
+
 
 def analyze_text(regulatory_text: str) -> dict:
     """

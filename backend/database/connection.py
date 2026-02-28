@@ -21,14 +21,17 @@ is_sqlite = "sqlite" in DATABASE_URL.lower()
 # Create async engine
 engine_kwargs = {
     "echo": False,  # Set to True for SQL query logging
+    "poolclass": NullPool,  # Disable connection pooling to avoid Windows issues
 }
 
 if not is_sqlite:
     # Configurações específicas para PostgreSQL
     engine_kwargs.update({
-        "pool_size": 10,
-        "max_overflow": 20,
-        "poolclass": NullPool if "pytest" in os.environ.get("_", "") else None,
+        "connect_args": {
+            "server_settings": {"jit": "off"},  # Disable JIT for stability
+            "timeout": 30,  # Connection timeout in seconds
+            "command_timeout": 30,  # Command timeout in seconds
+        }
     })
 
 engine = create_async_engine(DATABASE_URL, **engine_kwargs)
