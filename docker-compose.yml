@@ -22,8 +22,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/regulatory_ai
       PIX_REPO_PATH: /app/fake_pix_repo
     depends_on:
       postgres:
