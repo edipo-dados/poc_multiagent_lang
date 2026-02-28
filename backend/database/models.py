@@ -31,7 +31,7 @@ class Embedding(Base):
     Uses pgvector extension for efficient cosine similarity search.
     Embedding dimension is 384 (sentence-transformers/all-MiniLM-L6-v2).
     """
-    __tablename__ = "embeddings"
+    __tablename__ = "code_embeddings"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     file_path = Column(String(512), nullable=False, unique=True, index=True)
