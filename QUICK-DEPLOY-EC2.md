@@ -35,17 +35,26 @@ EOF
 ```
 
 ### 5️⃣ Executar Deploy
+
+**Opção A: Deploy Normal**
 ```bash
 chmod +x deploy.sh
-chmod +x fix-port-conflict.sh
 ./deploy.sh
 ```
 
-**Se der erro de porta em uso:**
+**Opção B: Se der erro de porta ou conflito (RECOMENDADO)**
 ```bash
-./fix-port-conflict.sh
-./deploy.sh
+chmod +x emergency-deploy.sh
+./emergency-deploy.sh
 ```
+
+O script de emergência faz:
+- Resolve conflitos do Git automaticamente
+- Para todos os containers Docker
+- Mata processos nas portas 8000, 8501, 5432
+- Limpa cache do Docker
+- Cria .env se não existir
+- Faz build e start dos containers
 
 ### 6️⃣ Popular Embeddings (após containers iniciarem)
 ```bash
