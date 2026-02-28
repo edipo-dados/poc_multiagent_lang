@@ -50,6 +50,9 @@ async def main():
         embedding = model.encode(content)
         embedding_list = embedding.tolist()
         
+        # Converter para formato PostgreSQL vector
+        embedding_str = '[' + ','.join(map(str, embedding_list)) + ']'
+        
         # Salvar no banco
         await conn.execute("""
             INSERT INTO code_embeddings (file_path, content, embedding)
@@ -59,7 +62,7 @@ async def main():
                 content = EXCLUDED.content,
                 embedding = EXCLUDED.embedding,
                 updated_at = NOW()
-        """, file_path, content, embedding_list)
+        """, file_path, content, embedding_str)
         
         print(f"   ✅ Salvo ({len(embedding)} dims)")
     
