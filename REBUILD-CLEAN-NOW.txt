@@ -1,0 +1,132 @@
+═══════════════════════════════════════════════════════════════
+🧹 SCRIPT DE REBUILD LIMPO CRIADO
+═══════════════════════════════════════════════════════════════
+
+✅ ARQUIVOS ATUALIZADOS:
+- rebuild-clean.sh: Script completo de limpeza e rebuild
+- docker-compose.yml: Ollama removido definitivamente
+
+═══════════════════════════════════════════════════════════════
+📋 COMO USAR (SEMPRE QUE FIZER REBUILD)
+═══════════════════════════════════════════════════════════════
+
+# 1. Fazer pull das mudanças
+cd ~/poc_multiagent_lang
+git pull origin main
+
+# 2. Dar permissão de execução
+chmod +x rebuild-clean.sh
+
+# 3. Executar o script
+./rebuild-clean.sh
+
+# O script faz TUDO automaticamente:
+#   🛑 Para containers
+#   🗑️  Remove Ollama (host + Docker)
+#   🗑️  Limpa imagens antigas
+#   🗑️  Limpa volumes órfãos
+#   🗑️  Limpa cache de build
+#   🗑️  Limpa logs do sistema
+#   🔨 Rebuild backend
+#   🚀 Inicia serviços (SEM Ollama)
+#   📊 Mostra espaço liberado
+
+═══════════════════════════════════════════════════════════════
+💾 ESPAÇO QUE SERÁ LIBERADO
+═══════════════════════════════════════════════════════════════
+
+- Ollama host: ~500MB
+- Ollama models: ~4GB
+- Ollama Docker: ~4GB
+- Imagens antigas: 2-5GB
+- Cache de build: 1-2GB
+- Logs antigos: 100-500MB
+
+TOTAL: 8-15GB liberados!
+
+═══════════════════════════════════════════════════════════════
+🔧 O QUE FOI MUDADO NO DOCKER-COMPOSE.YML
+═══════════════════════════════════════════════════════════════
+
+REMOVIDO:
+  ❌ Service ollama
+  ❌ Volume ollama_data
+  ❌ Dependency do backend no ollama
+
+MANTIDO:
+  ✅ postgres
+  ✅ backend
+  ✅ frontend
+
+Agora o Ollama NÃO VAI MAIS SUBIR automaticamente!
+
+═══════════════════════════════════════════════════════════════
+⚡ VANTAGENS DO SCRIPT
+═══════════════════════════════════════════════════════════════
+
+✅ Remove Ollama completamente (host + Docker)
+✅ Limpa tudo antes de rebuild
+✅ Economiza 8-15GB por rebuild
+✅ Evita acúmulo de lixo
+✅ Mostra espaço antes/depois
+✅ Um único comando faz tudo
+✅ Seguro (não remove dados importantes)
+
+═══════════════════════════════════════════════════════════════
+📅 QUANDO USAR
+═══════════════════════════════════════════════════════════════
+
+Use ./rebuild-clean.sh sempre que:
+  - Fizer git pull com mudanças no código
+  - Precisar rebuild do backend
+  - Estiver sem espaço em disco
+  - Quiser limpar o ambiente
+
+═══════════════════════════════════════════════════════════════
+🎯 WORKFLOW RECOMENDADO
+═══════════════════════════════════════════════════════════════
+
+# Workflow normal (com mudanças no código):
+cd ~/poc_multiagent_lang
+git pull origin main
+./rebuild-clean.sh
+
+# Workflow rápido (sem mudanças no código):
+cd ~/poc_multiagent_lang
+docker compose restart backend
+
+# Limpeza periódica (semanal):
+cd ~/poc_multiagent_lang
+./cleanup-server.sh
+
+═══════════════════════════════════════════════════════════════
+✅ RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+Após executar ./rebuild-clean.sh:
+
+1. Espaço em disco:
+   ANTES: ~90% usado
+   DEPOIS: ~70% usado (8-15GB liberados)
+
+2. Serviços rodando:
+   ✅ postgres
+   ✅ backend (com Gemini)
+   ✅ frontend
+   ❌ ollama (removido)
+
+3. Docker limpo:
+   ✅ Sem imagens antigas
+   ✅ Sem volumes órfãos
+   ✅ Sem cache de build
+   ✅ Sem containers parados
+
+═══════════════════════════════════════════════════════════════
+💡 DICAS
+═══════════════════════════════════════════════════════════════
+
+1. Execute ./rebuild-clean.sh em vez de comandos manuais
+2. O script é idempotente (pode executar várias vezes)
+3. Sempre mostra quanto espaço foi liberado
+4. Logs são mantidos (últimos 3 dias)
+5. Dados do postgres são preservados

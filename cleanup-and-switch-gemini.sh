@@ -112,8 +112,11 @@ echo ""
 echo "🔨 [10/10] Rebuilding e iniciando serviços..."
 echo "   (Isso pode demorar alguns minutos...)"
 docker compose build --no-cache backend
+echo "   ✅ Backend rebuilt"
+echo ""
+echo "🚀 Iniciando apenas serviços necessários (SEM Ollama)..."
 docker compose up -d postgres backend frontend
-echo "   ✅ Serviços iniciados"
+echo "   ✅ Serviços iniciados (postgres, backend, frontend)"
 echo ""
 
 # Aguardar backend iniciar

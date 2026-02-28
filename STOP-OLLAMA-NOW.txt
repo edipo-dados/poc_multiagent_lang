@@ -1,0 +1,85 @@
+═══════════════════════════════════════════════════════════════
+🛑 PARAR OLLAMA QUE ESTÁ BAIXANDO - EXECUTAR AGORA
+═══════════════════════════════════════════════════════════════
+
+O Ollama está baixando 3.3GB desnecessariamente!
+
+═══════════════════════════════════════════════════════════════
+📋 COMANDOS PARA PARAR IMEDIATAMENTE
+═══════════════════════════════════════════════════════════════
+
+# 1. Cancelar o download (Ctrl+C se estiver vendo o log)
+# Ou parar o container Ollama:
+
+docker compose stop ollama
+
+# 2. Remover o container Ollama
+docker compose rm -f ollama
+
+# 3. Subir APENAS os serviços necessários
+docker compose up -d postgres backend frontend
+
+# 4. Verificar que Ollama NÃO está rodando
+docker compose ps
+
+# Deve mostrar apenas:
+# ✅ postgres
+# ✅ backend  
+# ✅ frontend
+# ❌ ollama (não deve aparecer)
+
+═══════════════════════════════════════════════════════════════
+🔍 VERIFICAR CONFIGURAÇÃO
+═══════════════════════════════════════════════════════════════
+
+# Ver .env
+cat .env
+
+# Deve mostrar:
+# LLM_TYPE=gemini
+# GEMINI_API_KEY=AIzaSyBVk3MFe3zRRGVMaEslphM3Vd85oS5Rz44
+# GEMINI_MODEL=gemini-2.0-flash
+
+# Ver logs do backend
+docker compose logs backend | grep -i llm
+
+# Deve mostrar:
+# ✅ "Initialized GeminiLLM with model=models/gemini-2.0-flash"
+
+═══════════════════════════════════════════════════════════════
+🧪 TESTAR API
+═══════════════════════════════════════════════════════════════
+
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+# Deve retornar 200 OK em ~10-15 segundos
+
+═══════════════════════════════════════════════════════════════
+💡 POR QUE OLLAMA SUBIU?
+═══════════════════════════════════════════════════════════════
+
+O comando "docker compose up -d" sem especificar serviços
+sobe TODOS os serviços definidos no docker-compose.yml,
+incluindo o Ollama.
+
+CORRETO:
+  docker compose up -d postgres backend frontend
+
+ERRADO:
+  docker compose up -d  ← Sobe tudo, incluindo Ollama!
+
+═══════════════════════════════════════════════════════════════
+🗑️  LIMPAR IMAGEM DO OLLAMA (OPCIONAL)
+═══════════════════════════════════════════════════════════════
+
+Se o download do Ollama completou, remova a imagem:
+
+# Ver imagens
+docker images | grep ollama
+
+# Remover imagem do Ollama
+docker rmi ollama/ollama:latest
+
+# Libera ~3.3GB

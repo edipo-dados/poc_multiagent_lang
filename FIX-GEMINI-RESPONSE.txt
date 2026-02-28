@@ -1,0 +1,73 @@
+═══════════════════════════════════════════════════════════════
+🔧 FIX APLICADO - REBUILD NECESSÁRIO
+═══════════════════════════════════════════════════════════════
+
+Corrigi o bug do parsing da resposta do Gemini.
+Agora precisa fazer pull e rebuild.
+
+═══════════════════════════════════════════════════════════════
+📋 COMANDOS PARA EXECUTAR NO EC2
+═══════════════════════════════════════════════════════════════
+
+# 1. Ir para o diretório
+cd ~/poc_multiagent_lang
+
+# 2. Fazer pull do código corrigido
+git pull origin main
+
+# 3. Parar containers
+docker compose down
+
+# 4. Rebuild backend com código novo
+docker compose build --no-cache backend
+
+# 5. Subir serviços
+docker compose up -d postgres backend frontend
+
+# 6. Aguardar 10 segundos
+sleep 10
+
+# 7. Testar
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+🔧 O QUE FOI CORRIGIDO
+═══════════════════════════════════════════════════════════════
+
+ANTES:
+  return result["candidates"][0]["content"]["parts"][0]["text"]
+  ❌ KeyError: 'parts' se estrutura for diferente
+
+AGORA:
+  ✅ Try-except para KeyError
+  ✅ Log da resposta completa para debug
+  ✅ Tenta múltiplas estruturas de resposta
+  ✅ Suporta campo "text" direto
+  ✅ Suporta array "parts"
+  ✅ Mensagem de erro clara
+
+═══════════════════════════════════════════════════════════════
+✅ RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+Backend logs:
+  ✅ "Initialized GeminiLLM with model=models/gemini-2.5-flash"
+  ✅ "Gemini API response: {...}" (debug log)
+  ✅ "Sentinel Agent completed"
+  ✅ Sem KeyError
+
+API response:
+  ✅ Status 200 OK
+  ✅ Análise completa em ~10-15 segundos
+
+═══════════════════════════════════════════════════════════════
+🔍 SE AINDA DER ERRO
+═══════════════════════════════════════════════════════════════
+
+Ver logs detalhados:
+  docker compose logs backend | grep -A 20 "Gemini API response"
+
+Isso vai mostrar a estrutura exata da resposta do Gemini
+e eu posso ajustar o código se necessário.

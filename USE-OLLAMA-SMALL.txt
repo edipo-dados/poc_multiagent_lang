@@ -1,0 +1,125 @@
+═══════════════════════════════════════════════════════════════
+🔧 USAR OLLAMA COM MODELO PEQUENO (llama3.2:1b)
+═══════════════════════════════════════════════════════════════
+
+Gemini não está funcionando (todos os modelos dão 404).
+Vamos usar Ollama com modelo pequeno que cabe na RAM.
+
+═══════════════════════════════════════════════════════════════
+📋 COMANDOS PARA EXECUTAR
+═══════════════════════════════════════════════════════════════
+
+# 1. Editar .env
+nano .env
+
+# 2. Substituir TODO o conteúdo por:
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regulatory_ai
+LLM_TYPE=ollama
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=llama3.2:1b
+
+# 3. Salvar: Ctrl+O, Enter, Ctrl+X
+
+# 4. Parar tudo
+docker compose down
+
+# 5. Subir todos os serviços (incluindo Ollama)
+docker compose up -d
+
+# 6. Aguardar Ollama iniciar (30 segundos)
+sleep 30
+
+# 7. Baixar modelo pequeno llama3.2:1b (~1.3GB)
+docker compose exec ollama ollama pull llama3.2:1b
+
+# Aguardar download completar (2-5 minutos)
+
+# 8. Verificar que modelo foi baixado
+docker compose exec ollama ollama list
+
+# Deve mostrar:
+# NAME              ID              SIZE    MODIFIED
+# llama3.2:1b       ...             1.3 GB  X seconds ago
+
+# 9. Testar API
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+📊 SOBRE O LLAMA3.2:1B
+═══════════════════════════════════════════════════════════════
+
+Vantagens:
+  ✅ Usa apenas 1.3GB RAM (cabe na instância)
+  ✅ Funciona offline (sem API keys)
+  ✅ Sem custos
+  ✅ Privacidade total
+
+Desvantagens:
+  ⚠️  Mais lento (~20-40s por request)
+  ⚠️  Qualidade inferior ao Gemini
+  ⚠️  Respostas mais simples
+
+Performance esperada:
+  ⏱️  Sentinel Agent: ~15-25 segundos
+  ⏱️  Translator Agent: ~20-30 segundos
+  ⏱️  Total: ~2-3 minutos
+
+═══════════════════════════════════════════════════════════════
+✅ RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+Backend logs:
+  ✅ "Initialized OllamaLLM with model=llama3.2:1b"
+  ✅ "Sentinel Agent completed"
+  ✅ "Translator Agent completed"
+
+API response:
+  ✅ Status 200 OK
+  ✅ Análise completa (mais simples que Gemini)
+  ✅ Tempo: ~2-3 minutos
+
+═══════════════════════════════════════════════════════════════
+🔍 MONITORAR PROGRESSO
+═══════════════════════════════════════════════════════════════
+
+# Ver logs em tempo real
+docker compose logs -f backend
+
+# Ver uso de RAM
+docker stats --no-stream
+
+# Verificar que Ollama está rodando
+docker compose ps
+
+═══════════════════════════════════════════════════════════════
+💡 POR QUE GEMINI NÃO FUNCIONA?
+═══════════════════════════════════════════════════════════════
+
+Sua API key do Gemini não tem acesso aos modelos.
+Possíveis causas:
+  - Conta nova sem acesso aos modelos
+  - Região bloqueada
+  - Projeto sem Gemini API habilitada
+  - Restrições da conta
+
+Para usar Gemini, você precisaria:
+  1. Criar projeto no Google Cloud Console
+  2. Habilitar Generative Language API
+  3. Criar API key no projeto
+  4. Verificar que tem acesso aos modelos
+
+Mas para POC, llama3.2:1b funciona bem!
+
+═══════════════════════════════════════════════════════════════
+🎯 CONCLUSÃO
+═══════════════════════════════════════════════════════════════
+
+Para este POC, use llama3.2:1b:
+  ✅ Funciona na instância atual
+  ✅ Sem problemas de API keys
+  ✅ Sem custos
+  ⚠️  Mais lento mas funcional
+
+Execute os comandos acima e aguarde o download do modelo!

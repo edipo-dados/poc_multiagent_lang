@@ -1,0 +1,157 @@
+═══════════════════════════════════════════════════════════════
+❌ ERRO 403 FORBIDDEN - GEMINI API KEY INVÁLIDA
+═══════════════════════════════════════════════════════════════
+
+ERRO: 403 Client Error: Forbidden
+
+CAUSA: A API key do Gemini está inválida, expirou ou não tem permissões.
+
+═══════════════════════════════════════════════════════════════
+🔑 SOLUÇÃO: GERAR NOVA API KEY DO GEMINI
+═══════════════════════════════════════════════════════════════
+
+1. Acesse: https://aistudio.google.com/app/apikey
+
+2. Faça login com sua conta Google
+
+3. Clique em "Create API Key" ou "Get API Key"
+
+4. Copie a nova API key gerada
+
+5. Atualize o .env no servidor:
+
+   nano .env
+
+   # Substitua a linha:
+   GEMINI_API_KEY=AIzaSyBVk3MFe3zRRGVMaEslphM3Vd85oS5Rz44
+
+   # Por:
+   GEMINI_API_KEY=SUA_NOVA_API_KEY_AQUI
+
+   # Salvar: Ctrl+O, Enter, Ctrl+X
+
+6. Reiniciar backend:
+
+   docker compose restart backend
+
+7. Testar novamente:
+
+   curl -X POST http://localhost:8000/analyze \
+     -H 'Content-Type: application/json' \
+     -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+🔍 VERIFICAR API KEY ATUAL
+═══════════════════════════════════════════════════════════════
+
+# Testar API key diretamente
+curl "https://generativelanguage.googleapis.com/v1beta/models?key=AIzaSyBVk3MFe3zRRGVMaEslphM3Vd85oS5Rz44"
+
+# Se retornar 403:
+# ❌ API key inválida ou sem permissões
+
+# Se retornar lista de modelos:
+# ✅ API key válida
+
+═══════════════════════════════════════════════════════════════
+⚠️  POSSÍVEIS CAUSAS DO ERRO 403
+═══════════════════════════════════════════════════════════════
+
+1. API key expirou
+2. API key foi revogada
+3. API key não tem permissão para Gemini API
+4. Projeto Google Cloud não tem Gemini API habilitada
+5. Cota excedida (improvável para nova key)
+6. Restrições de IP/domínio na API key
+
+═══════════════════════════════════════════════════════════════
+🔧 ALTERNATIVA: USAR OPENAI (SE TIVER CRÉDITOS)
+═══════════════════════════════════════════════════════════════
+
+Se não conseguir resolver o Gemini, pode usar OpenAI:
+
+# 1. Editar .env
+nano .env
+
+# 2. Mudar para:
+LLM_TYPE=openai
+OPENAI_API_KEY=sua_openai_key_aqui
+OPENAI_MODEL=gpt-3.5-turbo
+
+# 3. Reiniciar
+docker compose restart backend
+
+# 4. Testar
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+NOTA: OpenAI tem rate limits no free tier (3 RPM)
+
+═══════════════════════════════════════════════════════════════
+🆓 ALTERNATIVA: USAR MODELO OLLAMA MENOR
+═══════════════════════════════════════════════════════════════
+
+Se não tiver API keys válidas, use modelo local menor:
+
+# 1. Editar .env
+nano .env
+
+# 2. Mudar para:
+LLM_TYPE=ollama
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=llama3.2:1b
+
+# 3. Subir Ollama
+docker compose up -d ollama
+
+# 4. Aguardar e baixar modelo pequeno (~1.3GB)
+sleep 30
+docker compose exec ollama ollama pull llama3.2:1b
+
+# 5. Reiniciar backend
+docker compose restart backend
+
+# 6. Testar
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+NOTA: llama3.2:1b usa apenas 1.3GB RAM (cabe na instância)
+Mas é mais lento (~20-40s) e qualidade inferior
+
+═══════════════════════════════════════════════════════════════
+📊 COMPARAÇÃO DE OPÇÕES
+═══════════════════════════════════════════════════════════════
+
+GEMINI (com API key válida):
+  ✅ Mais rápido (2-5s)
+  ✅ Melhor qualidade
+  ✅ Grátis com limites generosos
+  ❌ Precisa API key válida
+
+OPENAI:
+  ✅ Rápido (3-8s)
+  ✅ Boa qualidade
+  ❌ Rate limits no free tier (3 RPM)
+  ❌ Precisa API key válida
+
+OLLAMA llama3.2:1b:
+  ✅ Funciona offline
+  ✅ Cabe na RAM (1.3GB)
+  ✅ Sem API keys
+  ❌ Mais lento (20-40s)
+  ❌ Qualidade inferior
+
+═══════════════════════════════════════════════════════════════
+💡 RECOMENDAÇÃO
+═══════════════════════════════════════════════════════════════
+
+1. PRIMEIRO: Tente gerar nova API key do Gemini
+   https://aistudio.google.com/app/apikey
+
+2. SE NÃO FUNCIONAR: Use llama3.2:1b (modelo local pequeno)
+   Pelo menos funciona sem depender de APIs externas
+
+3. ÚLTIMA OPÇÃO: OpenAI (se tiver créditos)
+   Mas tem rate limits no free tier

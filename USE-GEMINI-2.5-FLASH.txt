@@ -1,0 +1,100 @@
+═══════════════════════════════════════════════════════════════
+✅ USAR GEMINI-2.5-FLASH (MODELO DISPONÍVEL)
+═══════════════════════════════════════════════════════════════
+
+Você TEM acesso aos modelos Gemini!
+Use gemini-2.5-flash (o mais recente e estável)
+
+═══════════════════════════════════════════════════════════════
+📋 COMANDOS PARA EXECUTAR
+═══════════════════════════════════════════════════════════════
+
+# 1. Editar .env
+nano .env
+
+# 2. Mudar a linha:
+GEMINI_MODEL=gemini-2.0-flash-exp
+
+# Para:
+GEMINI_MODEL=gemini-2.5-flash
+
+# 3. Salvar: Ctrl+O, Enter, Ctrl+X
+
+# 4. Parar e subir novamente
+docker compose down
+docker compose up -d postgres backend frontend
+
+# 5. Aguardar 10 segundos
+sleep 10
+
+# 6. Testar
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+✅ MODELOS GEMINI DISPONÍVEIS PARA VOCÊ
+═══════════════════════════════════════════════════════════════
+
+Recomendados (em ordem de preferência):
+
+1. gemini-2.5-flash (MELHOR)
+   ✅ Mais recente (Junho 2025)
+   ✅ 1M tokens de entrada
+   ✅ 65K tokens de saída
+   ✅ Suporta thinking mode
+
+2. gemini-2.5-pro
+   ✅ Melhor qualidade
+   ✅ 1M tokens de entrada
+   ⚠️  Mais lento
+
+3. gemini-2.0-flash
+   ✅ Rápido
+   ✅ 1M tokens de entrada
+   ✅ 8K tokens de saída
+
+4. gemini-flash-latest
+   ✅ Sempre a versão mais recente
+   ✅ Atualiza automaticamente
+
+═══════════════════════════════════════════════════════════════
+⚡ PERFORMANCE ESPERADA COM GEMINI-2.5-FLASH
+═══════════════════════════════════════════════════════════════
+
+Sentinel Agent: ~2-3 segundos
+Translator Agent: ~3-5 segundos
+CodeReader Agent: <1 segundo
+Impact Agent: ~2-3 segundos
+Kiro Prompt: ~2-3 segundos
+
+TOTAL: ~10-15 segundos
+
+═══════════════════════════════════════════════════════════════
+🎯 POR QUE GEMINI-2.5-FLASH?
+═══════════════════════════════════════════════════════════════
+
+✅ Versão estável (não experimental)
+✅ Mais recente (Junho 2025)
+✅ Melhor qualidade que 2.0
+✅ Suporta 1M tokens de entrada
+✅ Thinking mode habilitado
+✅ Disponível na sua conta
+
+═══════════════════════════════════════════════════════════════
+📊 COMPARAÇÃO: GEMINI vs OLLAMA
+═══════════════════════════════════════════════════════════════
+
+GEMINI-2.5-FLASH:
+  ⚡ Tempo: ~10-15 segundos
+  ⭐ Qualidade: Excelente
+  💾 RAM: ~500MB
+  💰 Custo: Grátis (limites generosos)
+
+OLLAMA llama3.2:1b:
+  ⏱️  Tempo: ~2-3 minutos
+  ⭐ Qualidade: Básica
+  💾 RAM: 1.3GB
+  💰 Custo: Grátis
+
+ESCOLHA ÓBVIA: GEMINI! 🚀

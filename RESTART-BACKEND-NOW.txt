@@ -1,0 +1,81 @@
+═══════════════════════════════════════════════════════════════
+🔄 REINICIAR BACKEND COM NOVA API KEY
+═══════════════════════════════════════════════════════════════
+
+Você atualizou o .env, agora precisa reiniciar o backend:
+
+═══════════════════════════════════════════════════════════════
+📋 COMANDOS PARA EXECUTAR
+═══════════════════════════════════════════════════════════════
+
+# 1. Reiniciar backend
+docker compose restart backend
+
+# 2. Ver logs para confirmar nova API key
+docker compose logs -f backend
+
+# Deve mostrar:
+# ✅ "Initialized GeminiLLM with model=models/gemini-2.0-flash"
+# ✅ "Application startup complete"
+
+# Pressione Ctrl+C para sair dos logs
+
+# 3. Testar API
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+# Deve retornar:
+# ✅ Status 200 OK
+# ✅ Resposta completa em ~10-15 segundos
+
+═══════════════════════════════════════════════════════════════
+✅ RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+Backend logs:
+  ✅ "Initialized GeminiLLM with model=models/gemini-2.0-flash"
+  ✅ "Sentinel Agent starting analysis"
+  ✅ "Change detection result: True"
+  ✅ "Translator Agent completed successfully"
+  ✅ "CodeReader Agent completed"
+  ✅ "Impact Agent completed"
+  ✅ "Kiro Prompt Generator completed"
+
+API response:
+  ✅ Status 200 OK
+  ✅ JSON completo com análise
+  ✅ Tempo total: ~10-15 segundos
+
+Performance:
+  ⚡ Sentinel: ~2-3 segundos
+  ⚡ Translator: ~3-5 segundos
+  ⚡ CodeReader: <1 segundo (retorna vazio temporariamente)
+  ⚡ Impact: ~2-3 segundos
+  ⚡ Kiro Prompt: ~2-3 segundos
+
+═══════════════════════════════════════════════════════════════
+🔍 SE DER ERRO
+═══════════════════════════════════════════════════════════════
+
+# Ver logs completos
+docker compose logs backend | tail -100
+
+# Verificar .env
+cat .env
+
+# Testar nova API key diretamente
+curl "https://generativelanguage.googleapis.com/v1beta/models?key=SUA_NOVA_API_KEY"
+
+# Se der erro, gere outra API key em:
+# https://aistudio.google.com/app/apikey
+
+═══════════════════════════════════════════════════════════════
+💡 DICA
+═══════════════════════════════════════════════════════════════
+
+Sempre que mudar o .env, precisa reiniciar o backend:
+  docker compose restart backend
+
+Ou reiniciar todos os serviços:
+  docker compose restart
