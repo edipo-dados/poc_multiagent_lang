@@ -246,63 +246,27 @@ def render_graph_visualization_tab(results: dict):
     if graph_visualization:
         st.markdown("### Diagrama de Fluxo dos Agentes")
         
-        # Use Streamlit components to render Mermaid
-        import streamlit.components.v1 as components
+        # Show as formatted text (simple and always works)
+        st.markdown("**Fluxo de Execução:**")
         
-        # Escape the Mermaid code properly for HTML
-        mermaid_code = graph_visualization.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        # Parse and display in a cleaner format
+        lines = graph_visualization.split('\n')
+        for line in lines:
+            line = line.strip()
+            if line and not line.startswith('graph'):
+                # Clean up the line for display
+                clean_line = line.replace('-->', '→').replace('[', '**').replace(']', '**').replace('<br/>', ' | ')
+                st.markdown(f"- {clean_line}")
         
-        mermaid_html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <script type="module">
-                import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-                mermaid.initialize({{ 
-                    startOnLoad: true, 
-                    theme: 'default',
-                    flowchart: {{
-                        useMaxWidth: true,
-                        htmlLabels: true,
-                        curve: 'basis'
-                    }}
-                }});
-            </script>
-            <style>
-                body {{
-                    margin: 0;
-                    padding: 20px;
-                    background: white;
-                    font-family: Arial, sans-serif;
-                }}
-                .mermaid {{
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 400px;
-                }}
-            </style>
-        </head>
-        <body>
-            <pre class="mermaid">
-{mermaid_code}
-            </pre>
-        </body>
-        </html>
-        """
-        
-        components.html(mermaid_html, height=600, scrolling=True)
-        
-        # Fallback: Show Mermaid code as text
-        with st.expander("📝 Ver código Mermaid (se o diagrama não carregar)"):
-            st.code(graph_visualization, language="mermaid")
+        # Show full Mermaid code in expander
+        with st.expander("📊 Ver diagrama interativo (Mermaid)"):
             st.markdown("""
-            **Dica:** Se o diagrama não aparecer acima, você pode:
-            1. Copiar o código acima
-            2. Colar em [Mermaid Live Editor](https://mermaid.live)
-            3. Visualizar o diagrama lá
+            **Visualize o diagrama completo:**
+            1. Copie o código abaixo
+            2. Cole em [Mermaid Live Editor](https://mermaid.live)
+            3. Veja o diagrama interativo
             """)
+            st.code(graph_visualization, language="mermaid")
     else:
         st.info("Visualização do grafo não disponível.")
 
