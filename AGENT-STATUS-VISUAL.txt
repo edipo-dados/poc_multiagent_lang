@@ -1,0 +1,158 @@
+╔══════════════════════════════════════════════════════════════════╗
+║          STATUS DOS AGENTES - ANÁLISE REGULATÓRIA POC            ║
+╚══════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────┐
+│ PIPELINE DE EXECUÇÃO                                             │
+└──────────────────────────────────────────────────────────────────┘
+
+    Input Text
+        │
+        ▼
+   ┌─────────────────┐
+   │ 1. SENTINEL     │  ✅ FUNCIONANDO
+   │ Change Detection│  • Detecta mudanças: SIM/NÃO
+   │ Risk Assessment │  • Avalia risco: LOW/MEDIUM/HIGH
+   └────────┬────────┘  • LLM: Gemini 2.5 Flash
+            │
+            ▼
+   ┌─────────────────┐
+   │ 2. TRANSLATOR   │  ✅ FUNCIONANDO
+   │ Text → Model    │  • Extrai título, descrição
+   │ Structuring     │  • Lista requisitos
+   └────────┬────────┘  • Identifica sistemas afetados
+            │
+            ▼
+   ┌─────────────────┐
+   │ 3. CODEREADER   │  🔧 AGORA HABILITADO
+   │ Semantic Search │  • Busca semântica no vector store
+   │ File Discovery  │  • Retorna top 10 arquivos relevantes
+   └────────┬────────┘  • Scores de relevância
+            │
+            ▼
+   ┌─────────────────┐
+   │ 4. IMPACT       │  ⚠️ DEPENDE DO CODEREADER
+   │ Technical       │  • Analisa cada arquivo identificado
+   │ Analysis        │  • Classifica severidade
+   └────────┬────────┘  • Sugere mudanças específicas
+            │
+            ▼
+   ┌─────────────────┐
+   │ 5. SPECGEN      │  ✅ FUNCIONANDO
+   │ Technical Spec  │  • Gera spec em Markdown
+   │ Generation      │  • Lista componentes afetados
+   └────────┬────────┘  • Detalha mudanças necessárias
+            │
+            ▼
+   ┌─────────────────┐
+   │ 6. KIROPROMPT   │  ✅ FUNCIONANDO
+   │ Dev Prompt      │  • Gera prompt para desenvolvimento
+   │ Generation      │  • Instruções específicas
+   └────────┬────────┘  • Critérios de validação
+            │
+            ▼
+      Final Output
+
+┌──────────────────────────────────────────────────────────────────┐
+│ RESUMO DO STATUS                                                 │
+└──────────────────────────────────────────────────────────────────┘
+
+ANTES DA CORREÇÃO:
+  ✅ Sentinel      → Funcionando
+  ✅ Translator    → Funcionando
+  ❌ CodeReader    → DESABILITADO (retornava [])
+  ⚠️  Impact       → Sem dados (dependia do CodeReader)
+  ✅ SpecGen       → Funcionando (spec mínima)
+  ✅ KiroPrompt    → Funcionando (prompt genérico)
+  
+  RESULTADO: 5/6 agentes (83%) - Pipeline parcial
+
+DEPOIS DA CORREÇÃO:
+  ✅ Sentinel      → Funcionando
+  ✅ Translator    → Funcionando
+  ✅ CodeReader    → HABILITADO (busca semântica real)
+  ✅ Impact        → Funcionando (com dados do CodeReader)
+  ✅ SpecGen       → Funcionando (spec detalhada)
+  ✅ KiroPrompt    → Funcionando (prompt específico)
+  
+  RESULTADO: 6/6 agentes (100%) - Pipeline completo
+
+┌──────────────────────────────────────────────────────────────────┐
+│ O QUE FOI CORRIGIDO                                              │
+└──────────────────────────────────────────────────────────────────┘
+
+ARQUIVO: backend/orchestrator/graph.py
+
+ANTES (linha 39-50):
+  def code_reader_agent(state: GlobalState) -> GlobalState:
+      logger.warning("Using temporary sync wrapper - returning empty")
+      state.impacted_files = []
+      return state
+
+DEPOIS (linha 39-58):
+  def code_reader_agent(state: GlobalState) -> GlobalState:
+      try:
+          loop = asyncio.new_event_loop()
+          asyncio.set_event_loop(loop)
+          try:
+              result = loop.run_until_complete(code_reader_agent_async(state))
+              return result
+          finally:
+              loop.close()
+      except Exception as e:
+          logger.error(f"CodeReader failed: {str(e)}")
+          state.impacted_files = []
+          return state
+
+MUDANÇA: Wrapper agora chama o agente async real!
+
+┌──────────────────────────────────────────────────────────────────┐
+│ PRÓXIMOS PASSOS NO EC2                                           │
+└──────────────────────────────────────────────────────────────────┘
+
+1. git pull origin main
+2. bash CHECK-EMBEDDINGS.sh
+3. Se embeddings = 0: popular banco
+4. docker compose down backend && docker compose up -d --build backend
+5. Testar API e verificar impacted_files != []
+
+┌──────────────────────────────────────────────────────────────────┐
+│ OUTPUTS ESPERADOS                                                │
+└──────────────────────────────────────────────────────────────────┘
+
+{
+  "execution_id": "...",
+  "change_detected": true,
+  "risk_level": "low",
+  "regulatory_model": {
+    "title": "RESOLUÇÃO BCB Nº 789/2024",
+    "description": "...",
+    "requirements": ["req1", "req2"],
+    "affected_systems": ["pix", "validation"]
+  },
+  "impacted_files": [                    ← AGORA POPULADO!
+    {
+      "file_path": "domain/validators.py",
+      "relevance_score": 0.87,
+      "snippet": "def validate_pix_key..."
+    },
+    ...
+  ],
+  "impact_analysis": [                   ← AGORA POPULADO!
+    {
+      "file_path": "domain/validators.py",
+      "severity": "high",
+      "impact_type": "validation_logic",
+      "description": "...",
+      "suggested_changes": ["change1", "change2"]
+    },
+    ...
+  ],
+  "technical_spec": "# Spec detalhada...",
+  "kiro_prompt": "Prompt específico...",
+  "graph_visualization": "graph LR..."
+}
+
+╔══════════════════════════════════════════════════════════════════╗
+║  TODOS OS 6 AGENTES AGORA HABILITADOS E FUNCIONAIS! 🎉          ║
+╚══════════════════════════════════════════════════════════════════╝

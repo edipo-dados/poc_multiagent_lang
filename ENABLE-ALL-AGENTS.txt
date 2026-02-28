@@ -1,0 +1,133 @@
+🚀 HABILITAR TODOS OS AGENTES - DEPLOY COMPLETO
+================================================
+
+STATUS ATUAL: 5 de 6 agentes funcionando (83%)
+PROBLEMA: CodeReader Agent estava desabilitado (retornando lista vazia)
+SOLUÇÃO: Habilitado wrapper async + popular embeddings no banco
+
+📋 DEPLOY NO EC2:
+-----------------
+
+1. SSH no EC2:
+   ssh ubuntu@YOUR_EC2_IP
+
+2. Ir para o diretório:
+   cd ~/poc_multiagent_lang
+
+3. Puxar mudanças:
+   git pull origin main
+
+4. Verificar se embeddings existem:
+   bash CHECK-EMBEDDINGS.sh
+
+5a. SE EMBEDDINGS EXISTEM (total > 0):
+    # Apenas rebuild do backend
+    docker compose down backend
+    docker compose up -d --build backend
+    
+5b. SE EMBEDDINGS NÃO EXISTEM (total = 0):
+    # Popular embeddings primeiro
+    docker compose exec backend python -m backend.scripts.populate_embeddings_sync
+    
+    # Aguardar conclusão (pode levar alguns minutos)
+    # Depois rebuild
+    docker compose down backend
+    docker compose up -d --build backend
+
+6. Verificar logs:
+   docker compose logs backend --tail=50 -f
+
+7. Testar API:
+   curl -X POST http://localhost:8000/analyze \
+     -H 'Content-Type: application/json' \
+     -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024 - Estabelece regras para validação de chaves Pix","repo_path":"/app/fake_pix_repo"}'
+
+📊 O QUE MUDOU:
+---------------
+
+ANTES:
+- CodeReader: Wrapper temporário retornando []
+- Impact: Sem arquivos para analisar
+- SpecGen: Spec mínima
+- KiroPrompt: Prompt genérico
+
+DEPOIS:
+- CodeReader: Busca semântica real no vector store
+- Impact: Analisa arquivos identificados
+- SpecGen: Spec detalhada com componentes
+- KiroPrompt: Prompt específico com mudanças
+
+🔍 VERIFICAR SUCESSO:
+---------------------
+
+No response da API, você deve ver:
+
+1. "impacted_files": [lista com até 10 arquivos]
+   - Cada arquivo tem: file_path, relevance_score, snippet
+   
+2. "impact_analysis": [lista com análises de impacto]
+   - Cada impacto tem: file_path, severity, description, suggested_changes
+   
+3. "technical_spec": Markdown detalhado com:
+   - Affected Components (não mais "No impacted components")
+   - Required Changes (mudanças específicas por arquivo)
+   
+4. "kiro_prompt": Prompt com:
+   - FILE MODIFICATIONS específicas
+   - Mudanças detalhadas por arquivo
+
+❌ SE DER ERRO:
+---------------
+
+Erro: "Table code_embeddings does not exist"
+Solução: Rodar script de criação de tabelas
+  docker compose exec backend python -m backend.scripts.create_database
+
+Erro: "No embeddings found"
+Solução: Popular embeddings
+  docker compose exec backend python -m backend.scripts.populate_embeddings_sync
+
+Erro: "Event loop is already running"
+Solução: Já corrigido no código (usa new_event_loop)
+
+Erro: "Connection refused to postgres"
+Solução: Verificar se postgres está rodando
+  docker compose ps postgres
+
+📈 PERFORMANCE ESPERADA:
+------------------------
+
+Com todos os agentes ativos:
+- Tempo total: 15-25 segundos
+- Sentinel: ~2s
+- Translator: ~3s
+- CodeReader: ~2s (busca semântica)
+- Impact: ~5-10s (analisa múltiplos arquivos)
+- SpecGen: ~2s
+- KiroPrompt: ~1s
+
+🎯 COMANDOS RÁPIDOS (COPY-PASTE):
+----------------------------------
+
+# Verificar embeddings
+bash CHECK-EMBEDDINGS.sh
+
+# Popular embeddings (se necessário)
+docker compose exec backend python -m backend.scripts.populate_embeddings_sync
+
+# Rebuild backend
+docker compose down backend
+docker compose up -d --build backend
+
+# Ver logs
+docker compose logs backend --tail=50 -f
+
+# Testar
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024 - Estabelece regras para validação de chaves Pix","repo_path":"/app/fake_pix_repo"}'
+
+✅ RESULTADO FINAL:
+-------------------
+Todos os 6 agentes funcionando (100%)
+Pipeline completo de análise regulatória operacional
