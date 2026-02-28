@@ -1,0 +1,24 @@
+🔍 DEBUGAR ESTRUTURA DO CONTAINER
+==================================
+
+Cole estes comandos no EC2 para ver a estrutura real:
+
+# 1. Ver estrutura do /app
+docker compose exec backend ls -la /app/
+
+# 2. Ver o que tem dentro de /app/backend
+docker compose exec backend ls -la /app/backend/
+
+# 3. Ver se scripts existe
+docker compose exec backend ls -la /app/backend/scripts/ 2>/dev/null || echo "Pasta scripts não existe aqui"
+
+# 4. Procurar o arquivo
+docker compose exec backend find /app -name "populate_embeddings*" -type f
+
+# 5. Ver PYTHONPATH
+docker compose exec backend env | grep PYTHON
+
+# 6. Ver working directory
+docker compose exec backend pwd
+
+COLE A SAÍDA DESSES COMANDOS AQUI!

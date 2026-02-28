@@ -1,0 +1,29 @@
+🎯 COMANDO ÚNICO - COPIE E COLE TUDO DE UMA VEZ
+================================================
+
+cd ~/poc_multiagent_lang && \
+git pull origin main && \
+docker cp populate-inline.py poc_multiagent_lang-backend-1:/tmp/populate.py && \
+docker compose exec backend python /tmp/populate.py && \
+docker compose exec postgres psql -U postgres -d regulatory_ai -c "SELECT COUNT(*) FROM code_embeddings;"
+
+================================================
+
+OU SE PREFERIR PASSO A PASSO:
+
+# 1. Ir para pasta
+cd ~/poc_multiagent_lang
+
+# 2. Pull (para pegar populate-inline.py)
+git pull origin main
+
+# 3. Copiar para container
+docker cp populate-inline.py poc_multiagent_lang-backend-1:/tmp/populate.py
+
+# 4. Rodar
+docker compose exec backend python /tmp/populate.py
+
+# 5. Verificar
+docker compose exec postgres psql -U postgres -d regulatory_ai -c "SELECT COUNT(*) FROM code_embeddings;"
+
+DEVE RETORNAR: count = 5
