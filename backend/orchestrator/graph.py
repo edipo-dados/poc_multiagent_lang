@@ -74,7 +74,7 @@ def spec_generator_agent(state: GlobalState) -> GlobalState:
     return spec_generator_agent_impl(state)
 
 
-def kiro_prompt_agent(state: GlobalState) -> GlobalState:
+def kiro_prompt_agent_wrapper(state: GlobalState) -> GlobalState:
     """
     KiroPrompt Agent - Generate development prompt.
     
@@ -143,7 +143,7 @@ class RegulatoryAnalysisGraph:
         self.graph.add_node("code_reader", self._wrap_agent(code_reader_agent, "CodeReader"))
         self.graph.add_node("impact", self._wrap_agent(impact_agent, "Impact"))
         self.graph.add_node("spec_generator", self._wrap_agent(spec_generator_agent, "SpecGenerator"))
-        self.graph.add_node("kiro_prompt", self._wrap_agent(kiro_prompt_agent, "KiroPrompt"))
+        self.graph.add_node("kiro_prompt", self._wrap_agent(kiro_prompt_agent_wrapper, "KiroPrompt"))
         
         # Set entry point
         self.graph.set_entry_point("sentinel")
