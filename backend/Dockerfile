@@ -16,14 +16,9 @@ COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
 
-# Copy only necessary Python source files
-COPY agents ./backend/agents
-COPY database ./backend/database
-COPY models ./backend/models
-COPY orchestrator ./backend/orchestrator
-COPY services ./backend/services
-COPY main.py ./backend/main.py
-COPY __init__.py ./backend/__init__.py
+# Copy all application code to backend directory
+# .dockerignore will exclude tests, examples, venv, etc.
+COPY . ./backend
 
 # Set PYTHONPATH
 ENV PYTHONPATH=/app
