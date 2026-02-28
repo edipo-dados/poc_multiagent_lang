@@ -8,7 +8,6 @@ python-dotenv==1.0.1
 # Database
 sqlalchemy[asyncio]==2.0.36
 asyncpg==0.31.0
-psycopg2-binary==2.9.9
 pgvector==0.3.6
 
 # LLM & AI
@@ -17,7 +16,8 @@ langchain-core>=0.3.0,<0.4.0
 langgraph>=0.2.0,<0.3.0
 langchain-ollama==0.2.0
 
-# Embeddings (CPU-only, no CUDA) - Fixed versions for Python 3.11 compatibility
+# Embeddings (CPU-only, no CUDA) - Fixed versions for compatibility
+numpy<2.0.0
 transformers==4.36.2
 sentence-transformers==2.3.1
 
