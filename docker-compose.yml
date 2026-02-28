@@ -26,6 +26,8 @@ services:
       - .env
     environment:
       PIX_REPO_PATH: /app/fake_pix_repo
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
