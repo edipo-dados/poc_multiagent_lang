@@ -40,18 +40,28 @@ def code_reader_agent(state: GlobalState) -> GlobalState:
     """
     CodeReader Agent - Identify relevant code files.
     
-    Temporary synchronous wrapper that returns empty impacted_files.
-    TODO: Implement proper async handling or convert to sync.
+    Synchronous wrapper that runs the async code_reader_agent using asyncio.
     
     Args:
         state: GlobalState containing regulatory_model
         
     Returns:
-        Updated GlobalState with empty impacted_files (temporary)
+        Updated GlobalState with impacted_files list
     """
-    logger.warning("CodeReader Agent: Using temporary sync wrapper - returning empty impacted_files")
-    state.impacted_files = []
-    return state
+    try:
+        # Run async code_reader_agent in event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(code_reader_agent_async(state))
+            return result
+        finally:
+            loop.close()
+    except Exception as e:
+        logger.error(f"CodeReader Agent wrapper failed: {str(e)}", exc_info=True)
+        # Return empty list on error to allow pipeline to continue
+        state.impacted_files = []
+        return state
 
 
 def spec_generator_agent(state: GlobalState) -> GlobalState:
