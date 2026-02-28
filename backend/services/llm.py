@@ -178,6 +178,9 @@ class GeminiLLM:
         """
         self.api_key = api_key
         self.model = model
+        # Ensure model name has correct format
+        if not self.model.startswith("models/"):
+            self.model = f"models/{self.model}"
         logger.info(f"Initialized GeminiLLM with model={model}")
     
     def generate(self, prompt: str, max_tokens: int = 1000) -> str:
@@ -195,7 +198,8 @@ class GeminiLLM:
             requests.RequestException: If API call fails
         """
         try:
-            url = f"https://generativelanguage.googleapis.com/v1/models/{self.model}:generateContent?key={self.api_key}"
+            # Use v1beta for now as it's more stable
+            url = f"https://generativelanguage.googleapis.com/v1beta/{self.model}:generateContent?key={self.api_key}"
             response = requests.post(
                 url,
                 headers={
