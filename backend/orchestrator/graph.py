@@ -40,20 +40,18 @@ def code_reader_agent(state: GlobalState) -> GlobalState:
     """
     CodeReader Agent - Identify relevant code files.
     
-    Wrapper for the async code_reader_agent implementation.
-    Uses a thread pool to run the async function without interfering with uvloop.
+    Temporary synchronous wrapper that returns empty impacted_files.
+    TODO: Implement proper async handling or convert to sync.
     
     Args:
         state: GlobalState containing regulatory_model
         
     Returns:
-        Updated GlobalState with impacted_files
+        Updated GlobalState with empty impacted_files (temporary)
     """
-    def run_async():
-        return asyncio.run(code_reader_agent_async(state))
-    
-    future = _executor.submit(run_async)
-    return future.result()
+    logger.warning("CodeReader Agent: Using temporary sync wrapper - returning empty impacted_files")
+    state.impacted_files = []
+    return state
 
 
 def spec_generator_agent(state: GlobalState) -> GlobalState:
