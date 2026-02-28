@@ -222,7 +222,29 @@ class GeminiLLM:
             )
             response.raise_for_status()
             result = response.json()
-            return result["candidates"][0]["content"]["parts"][0]["text"]
+            
+            # Log the response for debugging
+            logger.debug(f"Gemini API response: {result}")
+            
+            # Handle different response structures
+            try:
+                return result["candidates"][0]["content"]["parts"][0]["text"]
+            except (KeyError, IndexError, TypeError) as e:
+                logger.error(f"Unexpected Gemini response structure: {result}")
+                # Try alternative structure
+                if "candidates" in result and len(result["candidates"]) > 0:
+                    candidate = result["candidates"][0]
+                    if "content" in candidate:
+                        content = candidate["content"]
+                        # Try direct text field
+                        if "text" in content:
+                            return content["text"]
+                        # Try parts array
+                        if "parts" in content and len(content["parts"]) > 0:
+                            if "text" in content["parts"][0]:
+                                return content["parts"][0]["text"]
+                # If all else fails, return error message
+                raise ValueError(f"Could not parse Gemini response: {result}")
         except requests.RequestException as e:
             logger.error(f"Gemini API call failed: {e}")
             raise
