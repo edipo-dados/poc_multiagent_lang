@@ -18,6 +18,7 @@ Requirements: 2.1, 2.2, 2.3, 2.4, 2.5
 import logging
 import asyncio
 from typing import Dict, Any
+from concurrent.futures import ThreadPoolExecutor
 from langgraph.graph import StateGraph, END
 from backend.models.state import GlobalState
 from backend.agents.sentinel import sentinel_agent
@@ -30,6 +31,9 @@ from backend.agents.kiro_prompt import kiro_prompt_agent as kiro_prompt_agent_im
 
 logger = logging.getLogger(__name__)
 
+# Thread pool for running async code_reader
+_executor = ThreadPoolExecutor(max_workers=1)
+
 
 # Wrapper for async code_reader_agent
 def code_reader_agent(state: GlobalState) -> GlobalState:
@@ -37,6 +41,7 @@ def code_reader_agent(state: GlobalState) -> GlobalState:
     CodeReader Agent - Identify relevant code files.
     
     Wrapper for the async code_reader_agent implementation.
+    Uses a thread pool to run the async function without interfering with uvloop.
     
     Args:
         state: GlobalState containing regulatory_model
@@ -44,8 +49,11 @@ def code_reader_agent(state: GlobalState) -> GlobalState:
     Returns:
         Updated GlobalState with impacted_files
     """
-    # Run the async function in a new event loop
-    return asyncio.run(code_reader_agent_async(state))
+    def run_async():
+        return asyncio.run(code_reader_agent_async(state))
+    
+    future = _executor.submit(run_async)
+    return future.result()
 
 
 def spec_generator_agent(state: GlobalState) -> GlobalState:
