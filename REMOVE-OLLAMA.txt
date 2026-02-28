@@ -1,0 +1,107 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  🗑️  REMOVER OLLAMA - Liberar espaço                          ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Vamos remover o Ollama completamente e usar apenas APIs externas.
+
+═══════════════════════════════════════════════════════════════
+🧹 PASSO 1: Remover Ollama do host
+═══════════════════════════════════════════════════════════════
+
+# Parar serviço
+sudo systemctl stop ollama
+sudo systemctl disable ollama
+
+# Matar processos
+pkill -9 ollama
+
+# Remover binário
+sudo rm -rf /usr/local/bin/ollama
+sudo rm -rf /usr/bin/ollama
+
+# Remover modelos e dados (~4GB)
+rm -rf ~/.ollama
+
+# Remover serviço systemd
+sudo rm -f /etc/systemd/system/ollama.service
+sudo rm -rf /etc/systemd/system/ollama.service.d
+sudo systemctl daemon-reload
+
+echo "✅ Ollama removido do host"
+
+═══════════════════════════════════════════════════════════════
+🧹 PASSO 2: Remover Ollama do Docker Compose
+═══════════════════════════════════════════════════════════════
+
+cd ~/poc_multiagent_lang
+
+# Parar tudo
+docker compose down
+
+# Remover volume do Ollama
+docker volume rm poc_multiagent_lang_ollama_data
+
+# Atualizar docker-compose.yml (remover serviço ollama)
+# Vou criar uma versão sem Ollama
+
+═══════════════════════════════════════════════════════════════
+🔧 PASSO 3: Usar OpenAI (recomendado)
+═══════════════════════════════════════════════════════════════
+
+cat > .env << 'EOF'
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regulatory_ai
+LLM_TYPE=openai
+OPENAI_API_KEY=sua-chave-openai
+OPENAI_MODEL=gpt-3.5-turbo
+EOF
+
+# Obter chave: https://platform.openai.com/api-keys
+# Tier gratuito: 3 RPM, 200 RPD
+# Aguarde 1 minuto entre testes para evitar rate limit
+
+═══════════════════════════════════════════════════════════════
+💾 ESPAÇO LIBERADO
+═══════════════════════════════════════════════════════════════
+
+Ollama no host: ~4GB (modelos)
+Ollama no Docker: ~4GB (modelos + imagem)
+Total liberado: ~8GB
+
+═══════════════════════════════════════════════════════════════
+📊 COMPARAÇÃO: OpenAI vs Ollama
+═══════════════════════════════════════════════════════════════
+
+OpenAI:
+✅ Rápido (2-5 segundos)
+✅ Não usa espaço em disco
+✅ Não usa CPU/RAM do servidor
+✅ Qualidade excelente
+❌ Rate limit (3 RPM no tier gratuito)
+❌ Precisa de internet
+
+Ollama:
+✅ Sem rate limit
+✅ Funciona offline
+❌ Lento (60+ segundos)
+❌ Usa 4GB+ de disco
+❌ Usa CPU/RAM do servidor
+
+═══════════════════════════════════════════════════════════════
+🚀 INICIAR SEM OLLAMA
+═══════════════════════════════════════════════════════════════
+
+# Atualizar código
+git pull origin main
+
+# Iniciar apenas postgres, backend, frontend
+docker compose up -d postgres backend frontend
+
+# Aguardar
+sleep 15
+
+# Testar (aguarde 1 minuto se teve rate limit antes)
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════

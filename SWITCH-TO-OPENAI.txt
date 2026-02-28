@@ -1,0 +1,107 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  🔄 TROCAR PARA OPENAI - Simples e Rápido                    ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Como o código está montado como volume, só precisa atualizar .env e reiniciar.
+
+═══════════════════════════════════════════════════════════════
+🚀 COMANDOS (copie tudo de uma vez)
+═══════════════════════════════════════════════════════════════
+
+# 1. Ver .env atual
+echo "═══ .env ATUAL ═══"
+cat .env
+echo ""
+
+# 2. Atualizar .env para OpenAI
+cat > .env << 'EOF'
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regulatory_ai
+LLM_TYPE=openai
+OPENAI_API_KEY=SUA_CHAVE_AQUI
+OPENAI_MODEL=gpt-3.5-turbo
+EOF
+
+# IMPORTANTE: Substitua SUA_CHAVE_AQUI pela sua chave real!
+
+# 3. Verificar novo .env
+echo "═══ .env NOVO ═══"
+cat .env
+echo ""
+
+# 4. Reiniciar backend
+docker compose restart backend
+
+# 5. Aguardar
+echo "Aguardando 10 segundos..."
+sleep 10
+
+# 6. Verificar variáveis de ambiente do container
+echo "═══ VARIÁVEIS NO CONTAINER ═══"
+docker compose exec backend env | grep -E "(LLM_TYPE|OPENAI)"
+echo ""
+
+# 7. Ver logs recentes
+echo "═══ LOGS RECENTES ═══"
+docker compose logs backend --tail 20 | grep -E "(LLM|OpenAI|Ollama)"
+echo ""
+
+# 8. Testar API
+echo "═══ TESTE DA API ═══"
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024 - Teste","repo_path":"/app/fake_pix_repo"}' \
+  2>&1 | head -20
+
+───────────────────────────────────────────────────────────────
+
+COPIE TODO O BLOCO ACIMA
+
+═══════════════════════════════════════════════════════════════
+✅ O QUE VOCÊ DEVE VER
+═══════════════════════════════════════════════════════════════
+
+No passo 6 (variáveis):
+LLM_TYPE=openai
+OPENAI_API_KEY=sk-proj-...
+OPENAI_MODEL=gpt-3.5-turbo
+
+No passo 7 (logs):
+"Initialized OpenAILLM with model=gpt-3.5-turbo"
+
+No passo 8 (teste):
+Resposta JSON em 2-5 segundos (não 60s!)
+
+═══════════════════════════════════════════════════════════════
+❌ SE AINDA MOSTRAR OLLAMA
+═══════════════════════════════════════════════════════════════
+
+Problema: O .env não está sendo lido pelo container
+
+Solução 1 - Parar e iniciar (não só restart):
+docker compose down
+docker compose up -d
+sleep 10
+docker compose logs backend --tail 30
+
+Solução 2 - Verificar se .env está no lugar certo:
+pwd
+ls -la .env
+# Deve estar em ~/poc_multiagent_lang/.env
+
+Solução 3 - Definir variáveis direto no docker-compose.yml:
+# Editar docker-compose.yml e adicionar em backend > environment:
+  LLM_TYPE: openai
+  OPENAI_API_KEY: sua-chave
+  OPENAI_MODEL: gpt-3.5-turbo
+
+═══════════════════════════════════════════════════════════════
+🔍 DEBUG: Ver o que o container está lendo
+═══════════════════════════════════════════════════════════════
+
+# Ver TODAS as variáveis de ambiente
+docker compose exec backend env | sort
+
+# Ver especificamente LLM
+docker compose exec backend python -c "import os; print('LLM_TYPE:', os.getenv('LLM_TYPE')); print('OPENAI_API_KEY:', os.getenv('OPENAI_API_KEY', 'NOT SET')[:20]+'...')"
+
+═══════════════════════════════════════════════════════════════

@@ -36,12 +36,14 @@ echo ""
 
 # Step 3: Verify Ollama is listening
 echo -e "${YELLOW}Step 3: Verifying Ollama is listening...${NC}"
-if sudo netstat -tlnp 2>/dev/null | grep -q ":11434.*0.0.0.0"; then
+if sudo ss -tlnp 2>/dev/null | grep -q ":11434.*0.0.0.0"; then
     echo -e "${GREEN}✅ Ollama is listening on 0.0.0.0:11434${NC}"
-elif sudo ss -tlnp 2>/dev/null | grep -q ":11434.*0.0.0.0"; then
+    sudo ss -tlnp | grep 11434
+elif sudo netstat -tlnp 2>/dev/null | grep -q ":11434.*0.0.0.0"; then
     echo -e "${GREEN}✅ Ollama is listening on 0.0.0.0:11434${NC}"
+    sudo netstat -tlnp | grep 11434
 else
-    echo -e "${YELLOW}⚠️  Could not verify with netstat/ss, but continuing...${NC}"
+    echo -e "${YELLOW}⚠️  Could not verify with ss/netstat, but continuing...${NC}"
 fi
 echo ""
 
@@ -61,9 +63,25 @@ echo -e "${YELLOW}Step 5: Testing Ollama from host IP ($HOST_IP)...${NC}"
 if curl -s http://$HOST_IP:11434/api/tags > /dev/null 2>&1; then
     echo -e "${GREEN}✅ Ollama responds on $HOST_IP:11434${NC}"
 else
-    echo -e "${RED}❌ Ollama NOT responding on $HOST_IP:11434${NC}"
-    echo "This might be a firewall issue"
-    exit 1
+    echo -e "${YELLOW}⚠️  Ollama NOT responding on $HOST_IP:11434${NC}"
+    echo -e "${YELLOW}   This is a firewall issue. Fixing now...${NC}"
+    echo ""
+    
+    # Fix firewall
+    echo -e "${YELLOW}   Adding firewall rules...${NC}"
+    sudo iptables -I INPUT -s 172.16.0.0/12 -p tcp --dport 11434 -j ACCEPT 2>/dev/null || true
+    sudo iptables -I INPUT -s 172.31.0.0/16 -p tcp --dport 11434 -j ACCEPT 2>/dev/null || true
+    sudo iptables -I INPUT -s 127.0.0.1 -p tcp --dport 11434 -j ACCEPT 2>/dev/null || true
+    echo -e "${GREEN}   ✅ Firewall rules added${NC}"
+    
+    # Test again
+    sleep 2
+    if curl -s http://$HOST_IP:11434/api/tags > /dev/null 2>&1; then
+        echo -e "${GREEN}   ✅ Ollama now responds on $HOST_IP:11434${NC}"
+    else
+        echo -e "${RED}   ❌ Still cannot connect. Check: sudo netstat -tlnp | grep 11434${NC}"
+        exit 1
+    fi
 fi
 echo ""
 

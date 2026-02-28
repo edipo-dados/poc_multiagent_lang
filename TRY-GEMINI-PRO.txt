@@ -1,0 +1,81 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  🔧 TENTAR GEMINI-PRO - Modelo mais compatível               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+O modelo gemini-1.5-flash pode não estar disponível para sua API key.
+Vamos tentar gemini-pro que é o modelo padrão.
+
+═══════════════════════════════════════════════════════════════
+🚀 COMANDOS
+═══════════════════════════════════════════════════════════════
+
+# Atualizar .env para usar gemini-pro
+cat > .env << 'EOF'
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regulatory_ai
+LLM_TYPE=gemini
+GEMINI_API_KEY=AIzaSyBVk3MFe3zRRGVMaEslphM3Vd85oS5Rz44
+GEMINI_MODEL=gemini-pro
+EOF
+
+# Reiniciar backend
+docker compose restart backend
+sleep 10
+
+# Testar
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+───────────────────────────────────────────────────────────────
+
+COPIE TODO O BLOCO ACIMA
+
+═══════════════════════════════════════════════════════════════
+📋 MODELOS GEMINI DISPONÍVEIS
+═══════════════════════════════════════════════════════════════
+
+gemini-pro (mais compatível):
+- Modelo padrão
+- Funciona com todas as API keys
+- Boa qualidade
+- Limites generosos
+
+gemini-1.5-flash (mais novo):
+- Pode não estar disponível para todas as contas
+- Mais rápido
+- Precisa de acesso especial
+
+gemini-1.5-pro (mais poderoso):
+- Pode não estar disponível para todas as contas
+- Melhor qualidade
+- Precisa de acesso especial
+
+═══════════════════════════════════════════════════════════════
+🔍 SE AINDA DER 404
+═══════════════════════════════════════════════════════════════
+
+Teste sua API key diretamente:
+
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyBVk3MFe3zRRGVMaEslphM3Vd85oS5Rz44" \
+  -H 'Content-Type: application/json' \
+  -d '{"contents":[{"parts":[{"text":"Hello"}]}]}'
+
+Se retornar JSON com resposta: ✅ API key válida
+Se retornar 404: ❌ Problema com a API key ou modelo
+
+═══════════════════════════════════════════════════════════════
+🔄 ALTERNATIVA: VOLTAR PARA OPENAI
+═══════════════════════════════════════════════════════════════
+
+Se Gemini não funcionar, volte para OpenAI (aguarde 1 minuto entre testes):
+
+cat > .env << 'EOF'
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regulatory_ai
+LLM_TYPE=openai
+OPENAI_API_KEY=sua-chave-openai
+OPENAI_MODEL=gpt-3.5-turbo
+EOF
+
+docker compose restart backend
+
+═══════════════════════════════════════════════════════════════

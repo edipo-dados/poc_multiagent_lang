@@ -1,0 +1,92 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║  🚀 EXECUTE ESTES COMANDOS NO SEU EC2 AGORA                  ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+O problema é que o Ollama está escutando apenas em localhost (127.0.0.1),
+mas o container Docker precisa acessá-lo pelo IP da rede (172.31.5.241).
+
+═══════════════════════════════════════════════════════════════
+📋 COMANDOS (copie e cole no EC2)
+═══════════════════════════════════════════════════════════════
+
+cd ~/poc_multiagent_lang
+git pull origin main
+bash fix-complete.sh
+
+═══════════════════════════════════════════════════════════════
+✅ PRONTO! O script vai fazer TUDO automaticamente:
+═══════════════════════════════════════════════════════════════
+
+1. ✅ Parar o Ollama
+2. ✅ Reiniciar Ollama escutando em 0.0.0.0:11434 (todas as interfaces)
+3. ✅ Verificar que Ollama está acessível
+4. ✅ Atualizar .env com o IP correto do host
+5. ✅ Reiniciar o backend
+6. ✅ Testar a conexão do container para o host
+7. ✅ Fazer um teste completo da API
+8. ✅ Mostrar os resultados
+
+═══════════════════════════════════════════════════════════════
+🎯 RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+Você deve ver:
+✅ Ollama is listening on 0.0.0.0:11434
+✅ Ollama responds on localhost:11434
+✅ Ollama responds on 172.31.5.241:11434
+✅ Container can reach Ollama on host!
+✅ SUCCESS! API is working!
+
+═══════════════════════════════════════════════════════════════
+❌ SE DER ERRO
+═══════════════════════════════════════════════════════════════
+
+O script vai mostrar exatamente onde falhou. Possíveis problemas:
+
+1. Firewall bloqueando porta 11434
+   Solução: sudo iptables -I INPUT -s 172.31.0.0/16 -p tcp --dport 11434 -j ACCEPT
+
+2. Ollama não inicia
+   Solução: cat /tmp/ollama.log (ver o erro)
+
+3. Container não alcança host
+   Solução: Verificar configuração de rede do Docker
+
+═══════════════════════════════════════════════════════════════
+📚 DOCUMENTAÇÃO ADICIONAL
+═══════════════════════════════════════════════════════════════
+
+Se precisar de mais detalhes:
+- FIX-OLLAMA-NETWORK.md - Guia completo de troubleshooting
+- TROUBLESHOOTING.md - Guia geral de problemas
+- FIX-SUMMARY.md - Resumo das mudanças
+
+═══════════════════════════════════════════════════════════════
+🔍 VERIFICAÇÃO MANUAL (se quiser entender o que está acontecendo)
+═══════════════════════════════════════════════════════════════
+
+# Ver se Ollama está escutando em todas as interfaces
+sudo netstat -tlnp | grep 11434
+# Deve mostrar: 0.0.0.0:11434 (não 127.0.0.1:11434)
+
+# Testar do host
+curl http://172.31.5.241:11434/api/tags
+
+# Testar do container
+docker compose exec backend curl http://172.31.5.241:11434/api/tags
+
+# Ver logs do backend
+docker compose logs backend --tail 50 | grep -i ollama
+
+═══════════════════════════════════════════════════════════════
+⚠️  LEMBRETE IMPORTANTE
+═══════════════════════════════════════════════════════════════
+
+REVOGUE SUA API KEY DO OPENAI que foi exposta na conversa:
+https://platform.openai.com/api-keys
+
+Chave exposta: sk-proj-k1DSxrKn8UGV...
+
+═══════════════════════════════════════════════════════════════

@@ -1,0 +1,153 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  📥 BAIXAR MODELO LLAMA2 - EXECUTE AGORA                     ║
+╚═══════════════════════════════════════════════════════════════╝
+
+O Ollama Docker está rodando mas precisa do modelo llama2!
+
+═══════════════════════════════════════════════════════════════
+🚀 OPÇÃO 1: Script Automático (RECOMENDADO)
+═══════════════════════════════════════════════════════════════
+
+bash download-llama2.sh
+
+───────────────────────────────────────────────────────────────
+COPIE O COMANDO ACIMA
+───────────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════════════
+🔧 OPÇÃO 2: Comando Manual
+═══════════════════════════════════════════════════════════════
+
+docker compose exec ollama ollama pull llama2
+
+───────────────────────────────────────────────────────────────
+COPIE O COMANDO ACIMA
+───────────────────────────────────────────────────────────────
+
+⏱️  TEMPO ESTIMADO: 3-5 minutos (depende da conexão)
+💾 TAMANHO: 3.8GB
+
+═══════════════════════════════════════════════════════════════
+📊 O QUE VAI ACONTECER
+═══════════════════════════════════════════════════════════════
+
+1. Conecta no container Ollama
+2. Baixa o modelo llama2 do registry.ollama.ai
+3. Salva no volume ollama_data (persistente)
+4. Modelo fica disponível para uso
+
+Você verá algo assim:
+
+pulling manifest
+pulling 8934d96d3f08... 100% ▕████████████████▏ 3.8 GB
+pulling 8c17c2ebb0ea... 100% ▕████████████████▏ 7.0 KB
+pulling 7c23fb36d801... 100% ▕████████████████▏ 4.8 KB
+pulling 2e0493f67d0c... 100% ▕████████████████▏   59 B
+pulling fa304d675061... 100% ▕████████████████▏   91 B
+pulling 42ba7f8a01dd... 100% ▕████████████████▏  557 B
+verifying sha256 digest
+writing manifest
+success
+
+═══════════════════════════════════════════════════════════════
+✅ APÓS O DOWNLOAD
+═══════════════════════════════════════════════════════════════
+
+# 1. Verificar modelo instalado
+docker compose exec ollama ollama list
+
+# Deve mostrar:
+# NAME            ID              SIZE    MODIFIED
+# llama2:latest   78e26419b446    3.8 GB  X seconds ago
+
+# 2. Testar API completa
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+# 3. Ver logs em tempo real
+docker compose logs -f backend
+
+═══════════════════════════════════════════════════════════════
+🐛 SE DER ERRO
+═══════════════════════════════════════════════════════════════
+
+Erro: "connection refused" ou "lookup registry.ollama.ai"
+→ Problema de DNS. Verifique:
+
+# 1. Verificar se container está rodando
+docker compose ps
+
+# 2. Testar DNS dentro do container
+docker compose exec ollama ping -c 2 8.8.8.8
+docker compose exec ollama nslookup registry.ollama.ai
+
+# 3. Se DNS não funcionar, recrie o container
+docker compose down
+docker compose up -d
+
+# 4. Aguarde 15 segundos e tente novamente
+sleep 15
+docker compose exec ollama ollama pull llama2
+
+───────────────────────────────────────────────────────────────
+
+Erro: "address already in use" na porta 11434
+→ Ollama do host ainda está rodando. Pare ele:
+
+sudo systemctl stop ollama
+sudo systemctl disable ollama
+
+# Depois recrie os containers
+docker compose down
+docker compose up -d
+
+───────────────────────────────────────────────────────────────
+
+Erro: "no space left on device"
+→ Disco cheio. Limpe espaço:
+
+# Ver uso do disco
+df -h
+
+# Limpar containers e imagens antigas
+docker system prune -a
+
+═══════════════════════════════════════════════════════════════
+📈 PERFORMANCE ESPERADA
+═══════════════════════════════════════════════════════════════
+
+Após o download, a primeira requisição será lenta:
+- Carregamento do modelo: 10-30s
+- Geração de resposta: 30-60s
+- Total: ~60-90s
+
+Requisições seguintes serão mais rápidas:
+- Modelo já carregado na memória
+- Geração: 30-60s
+- Total: ~30-60s
+
+Isso é normal para t3.small sem GPU!
+
+═══════════════════════════════════════════════════════════════
+🎯 PRÓXIMOS PASSOS
+═══════════════════════════════════════════════════════════════
+
+1. Execute: bash download-llama2.sh
+2. Aguarde o download completar (3-5 min)
+3. Teste a API
+4. Se funcionar: ✅ Deploy completo!
+5. Se não funcionar: veja troubleshooting acima
+
+═══════════════════════════════════════════════════════════════
+💡 DICA
+═══════════════════════════════════════════════════════════════
+
+O modelo é baixado apenas UMA VEZ e fica salvo no volume.
+Mesmo se você fizer docker compose down/up, não precisa baixar de novo!
+
+Para ver modelos instalados a qualquer momento:
+docker compose exec ollama ollama list
+
+═══════════════════════════════════════════════════════════════
+

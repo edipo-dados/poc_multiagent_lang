@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════════════
+🚀 COMANDOS PARA EXECUTAR NO EC2 - COPIE E COLE
+═══════════════════════════════════════════════════════════════
+
+# 1. Conectar no EC2 (do seu computador local)
+ssh -i sua-chave.pem ubuntu@SEU_IP_EC2
+
+# 2. Ir para o diretório do projeto
+cd ~/poc_multiagent_lang
+
+# 3. Fazer pull das mudanças
+git pull origin main
+
+# 4. Executar o script de fix (AUTOMÁTICO)
+bash quick-fix-deploy.sh
+
+═══════════════════════════════════════════════════════════════
+✅ PRONTO! O script vai fazer tudo automaticamente.
+═══════════════════════════════════════════════════════════════
+
+Após executar, você deve ver:
+- ✅ .env atualizado
+- ✅ docker-compose.yml atualizado
+- ✅ Backend reiniciado
+- ✅ Health check mostrando status
+- ✅ Logs sem "Connection refused"
+
+═══════════════════════════════════════════════════════════════
+📊 VERIFICAÇÕES APÓS O DEPLOY
+═══════════════════════════════════════════════════════════════
+
+# Ver logs (NÃO deve ter "Connection refused")
+docker compose logs backend --tail 50 | grep -i ollama
+
+# Testar API
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"Test","repo_path":"/app/fake_pix_repo"}'
+
+# Health check
+curl http://localhost:8000/health | jq '.'
+
+═══════════════════════════════════════════════════════════════
+🎯 RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+ANTES (❌):
+  Ollama API call failed: Connection refused
+  Translator Agent: Using fallback
+
+DEPOIS (✅):
+  Initialized OllamaLLM with model=llama2, base_url=http://host.docker.internal:11434
+  Translator Agent completed successfully
+
+═══════════════════════════════════════════════════════════════
+📚 DOCUMENTAÇÃO ADICIONAL
+═══════════════════════════════════════════════════════════════
+
+- DEPLOY-NOW.md - Guia rápido de deploy
+- FIX-SUMMARY.md - Resumo detalhado do fix
+- TROUBLESHOOTING.md - Guia completo de troubleshooting
+
+═══════════════════════════════════════════════════════════════
+⚠️ IMPORTANTE: REVOGUE SUA API KEY DO OPENAI
+═══════════════════════════════════════════════════════════════
+
+Você expôs sua chave OpenAI na conversa. REVOGUE IMEDIATAMENTE:
+1. Acesse: https://platform.openai.com/api-keys
+2. Revogue a chave: sk-proj-k1DSxrKn8UGV...
+3. Crie uma nova se precisar
+
+Por enquanto, estamos usando Ollama (local), então não precisa.
+
+═══════════════════════════════════════════════════════════════

@@ -168,20 +168,22 @@ class OpenAILLM:
 class GeminiLLM:
     """LLM provider using Google Gemini API."""
     
-    def __init__(self, api_key: str, model: str = "gemini-1.5-flash"):
+    def __init__(self, api_key: str, model: str = "gemini-2.0-flash"):
         """
         Initialize Gemini LLM provider.
         
         Args:
             api_key: Google API key
-            model: Model name to use (default: gemini-1.5-flash)
+            model: Model name to use (default: gemini-2.0-flash)
+                   Can be with or without 'models/' prefix
         """
         self.api_key = api_key
-        self.model = model
-        # Ensure model name has correct format
-        if not self.model.startswith("models/"):
-            self.model = f"models/{self.model}"
-        logger.info(f"Initialized GeminiLLM with model={model}")
+        # Ensure model name has correct format (add prefix only if not present)
+        if model.startswith("models/"):
+            self.model = model
+        else:
+            self.model = f"models/{model}"
+        logger.info(f"Initialized GeminiLLM with model={self.model}")
     
     def generate(self, prompt: str, max_tokens: int = 1000) -> str:
         """
@@ -247,7 +249,7 @@ def get_llm() -> LLMProvider:
         
         For Gemini:
             GEMINI_API_KEY: Google API key (required)
-            GEMINI_MODEL: Model name (default: gemini-1.5-flash)
+            GEMINI_MODEL: Model name (default: gemini-2.0-flash)
     
     Returns:
         LLMProvider instance
@@ -272,7 +274,7 @@ def get_llm() -> LLMProvider:
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise ValueError("GEMINI_API_KEY environment variable is required for Gemini LLM")
-        model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
         return GeminiLLM(api_key=api_key, model=model)
     elif llm_type == "local":
         return LocalLLM()

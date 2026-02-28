@@ -1,0 +1,85 @@
+═══════════════════════════════════════════════════════════════
+🗑️  REMOVER OLLAMA E USAR GEMINI - EXECUTAR AGORA
+═══════════════════════════════════════════════════════════════
+
+✅ ARQUIVOS JÁ ATUALIZADOS:
+- docker-compose.yml: Ollama service removido
+- .env: Configurado para usar Gemini API
+- backend/services/llm.py: Bug do double prefix corrigido
+
+═══════════════════════════════════════════════════════════════
+📋 COMANDOS PARA EXECUTAR NO EC2
+═══════════════════════════════════════════════════════════════
+
+# 1. Parar todos os containers
+cd ~/poc_multiagent_lang
+docker compose down
+
+# 2. Remover Ollama do host (libera ~4GB)
+sudo systemctl stop ollama
+sudo systemctl disable ollama
+sudo rm -rf /usr/local/bin/ollama
+sudo rm -rf /etc/systemd/system/ollama.service
+sudo rm -rf ~/.ollama
+sudo systemctl daemon-reload
+
+# 3. Remover volume do Ollama Docker (libera mais ~4GB)
+docker volume rm poc_multiagent_lang_ollama_data
+
+# 4. Rebuild e restart com Gemini
+docker compose build --no-cache backend
+docker compose up -d
+
+# 5. Verificar logs
+docker compose logs -f backend
+
+# 6. Testar API
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+🔧 O QUE FOI CORRIGIDO
+═══════════════════════════════════════════════════════════════
+
+1. ✅ Bug do Gemini corrigido:
+   - Antes: models/models/gemini-2.0-flash (404 error)
+   - Agora: models/gemini-2.0-flash (correto)
+   - Fix: Verifica se já tem prefix antes de adicionar
+
+2. ✅ Ollama removido do docker-compose.yml:
+   - Service ollama deletado
+   - Volume ollama_data deletado
+   - Dependency do backend removida
+
+3. ✅ .env atualizado para Gemini:
+   - LLM_TYPE=gemini
+   - GEMINI_API_KEY=AIzaSyBVk3MFe3zRRGVMaEslphM3Vd85oS5Rz44
+   - GEMINI_MODEL=gemini-2.0-flash
+
+4. ✅ Modelo atualizado:
+   - Usando gemini-2.0-flash (mais recente e disponível)
+   - Compatível com v1beta API
+
+═══════════════════════════════════════════════════════════════
+💾 ESPAÇO LIBERADO
+═══════════════════════════════════════════════════════════════
+
+- Ollama binário host: ~500MB
+- Ollama models host (~/.ollama): ~4GB
+- Ollama Docker volume: ~4GB
+- TOTAL: ~8.5GB liberados
+
+═══════════════════════════════════════════════════════════════
+✅ RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+Backend logs devem mostrar:
+- "Initialized GeminiLLM with model=models/gemini-2.0-flash"
+- Sem erros 404
+- Agents executando com sucesso
+
+API deve retornar:
+- Status 200 OK
+- Análise completa com todos os agents
+- Sem fallback responses

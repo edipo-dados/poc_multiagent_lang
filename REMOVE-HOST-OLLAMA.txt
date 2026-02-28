@@ -1,0 +1,101 @@
+═══════════════════════════════════════════════════════════════
+🗑️  REMOVER OLLAMA DO HOST EC2 (MANTER NO DOCKER)
+═══════════════════════════════════════════════════════════════
+
+✅ ESTRATÉGIA CORRETA:
+- ❌ Remover Ollama instalado diretamente no host EC2
+- ✅ Manter Ollama rodando via Docker Compose
+- ✅ Usar nome do service (ollama:11434) em vez de IP
+- ✅ Evita problema de IP mudando a cada restart
+
+═══════════════════════════════════════════════════════════════
+📋 COMANDOS PARA EXECUTAR NO EC2
+═══════════════════════════════════════════════════════════════
+
+# 1. Parar Ollama do host EC2
+sudo systemctl stop ollama
+sudo systemctl disable ollama
+
+# 2. Remover Ollama do host (libera ~4GB)
+sudo rm -rf /usr/local/bin/ollama
+sudo rm -rf /etc/systemd/system/ollama.service
+sudo rm -rf ~/.ollama
+sudo systemctl daemon-reload
+
+# 3. Verificar que porta 11434 está livre
+sudo ss -tlnp | grep 11434
+# Deve retornar vazio (nada rodando)
+
+# 4. Parar containers atuais
+cd ~/poc_multiagent_lang
+docker compose down
+
+# 5. Subir com Ollama no Docker
+docker compose up -d
+
+# 6. Aguardar Ollama iniciar (pode demorar ~30s)
+sleep 30
+
+# 7. Baixar modelo llama2 no container Ollama
+docker compose exec ollama ollama pull llama2
+
+# 8. Verificar que modelo foi baixado
+docker compose exec ollama ollama list
+
+# 9. Testar API
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+🔧 CONFIGURAÇÃO ATUALIZADA
+═══════════════════════════════════════════════════════════════
+
+.env:
+  LLM_TYPE=ollama
+  OLLAMA_BASE_URL=http://ollama:11434  ← Nome do service Docker
+  OLLAMA_MODEL=llama2
+
+docker-compose.yml:
+  ✅ Service ollama mantido
+  ✅ Backend depende do ollama
+  ✅ Comunicação via rede Docker interna
+
+═══════════════════════════════════════════════════════════════
+💾 ESPAÇO LIBERADO
+═══════════════════════════════════════════════════════════════
+
+- Ollama binário host: ~500MB
+- Ollama models host (~/.ollama): ~4GB
+- TOTAL: ~4.5GB liberados no host
+
+Ollama Docker continua usando ~4GB mas dentro do volume Docker.
+
+═══════════════════════════════════════════════════════════════
+✅ VANTAGENS DESTA ABORDAGEM
+═══════════════════════════════════════════════════════════════
+
+1. ✅ Sem problema de IP mudando (usa nome do service)
+2. ✅ Ollama gerenciado pelo Docker Compose
+3. ✅ Restart automático com depends_on
+4. ✅ Logs centralizados (docker compose logs)
+5. ✅ Fácil de fazer backup/restore (volume Docker)
+6. ✅ Libera espaço no host EC2
+
+═══════════════════════════════════════════════════════════════
+🔍 VERIFICAÇÃO
+═══════════════════════════════════════════════════════════════
+
+# Ver logs do Ollama
+docker compose logs -f ollama
+
+# Ver logs do Backend
+docker compose logs -f backend
+
+# Verificar que host Ollama não está rodando
+sudo systemctl status ollama
+# Deve mostrar: Unit ollama.service could not be found
+
+# Verificar containers rodando
+docker compose ps
+# Deve mostrar: postgres, ollama, backend, frontend (todos UP)

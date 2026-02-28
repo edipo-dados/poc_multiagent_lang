@@ -1,0 +1,159 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  🆓 USAR OPENAI GRÁTIS - Modelo de Teste                     ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Você tem acesso ao tier gratuito da OpenAI para testes!
+
+═══════════════════════════════════════════════════════════════
+🚀 COMANDOS PARA EXECUTAR NO EC2
+═══════════════════════════════════════════════════════════════
+
+# 1. Fazer pull das mudanças
+cd ~/poc_multiagent_lang
+git pull origin main
+
+# 2. Atualizar .env com sua API key
+cat > .env << 'EOF'
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regulatory_ai
+LLM_TYPE=openai
+OPENAI_API_KEY=SUA_CHAVE_AQUI
+OPENAI_MODEL=gpt-3.5-turbo
+OPENAI_BASE_URL=https://api.openai.com/v1
+EOF
+
+# IMPORTANTE: Substitua "SUA_CHAVE_AQUI" pela sua chave real!
+# Exemplo: OPENAI_API_KEY=sk-proj-abc123...
+
+# 3. Verificar .env
+cat .env
+
+# 4. Reiniciar backend
+docker compose restart backend
+
+# 5. Aguardar
+echo "Aguardando 10 segundos..."
+sleep 10
+
+# 6. Testar
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024 - Teste de regulação bancária sobre limites de crédito e requisitos de capital para instituições financeiras","repo_path":"/app/fake_pix_repo"}' \
+  | jq '.'
+
+───────────────────────────────────────────────────────────────
+
+COPIE TODO O BLOCO ACIMA (lembre de substituir SUA_CHAVE_AQUI)
+
+═══════════════════════════════════════════════════════════════
+✅ RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+1. Resposta RÁPIDA (2-5 segundos, não 60+ segundos!)
+2. JSON completo com:
+   - execution_id
+   - change_detected: true
+   - risk_level: high
+   - regulatory_model (com dados estruturados!)
+   - technical_spec
+   - kiro_prompt
+
+3. Logs devem mostrar:
+   ✅ Initialized OpenAILLM with model=gpt-3.5-turbo
+   ✅ Sentinel Agent completed successfully
+   ✅ Translator Agent completed successfully (SEM timeout!)
+
+═══════════════════════════════════════════════════════════════
+🔍 VERIFICAR LOGS
+═══════════════════════════════════════════════════════════════
+
+docker compose logs backend --tail 50 | grep -E "(OpenAI|Translator|Sentinel|ERROR)"
+
+Deve mostrar:
+- "Initialized OpenAILLM with model=gpt-3.5-turbo"
+- "Translator Agent completed successfully"
+- NÃO deve ter "timeout" ou "fallback"
+
+═══════════════════════════════════════════════════════════════
+📊 COMPARAÇÃO: Antes vs Depois
+═══════════════════════════════════════════════════════════════
+
+ANTES (Ollama):
+❌ Sentinel: OK
+❌ Translator: TIMEOUT (60s) → fallback
+❌ Tempo total: 60+ segundos
+❌ Dados estruturados: Mínimos (fallback)
+
+DEPOIS (OpenAI):
+✅ Sentinel: OK
+✅ Translator: OK (2-3s)
+✅ Tempo total: 5-10 segundos
+✅ Dados estruturados: Completos e precisos
+
+═══════════════════════════════════════════════════════════════
+🆓 TIER GRATUITO DA OPENAI
+═══════════════════════════════════════════════════════════════
+
+Novos usuários recebem:
+- $5 em créditos gratuitos
+- Válido por 3 meses
+- Suficiente para ~1000-5000 análises
+
+Modelos disponíveis no tier gratuito:
+- gpt-3.5-turbo (recomendado) - Rápido e barato
+- gpt-4o-mini - Mais recente, também barato
+- gpt-4 - Melhor qualidade, mais caro
+
+Para usar gpt-4o-mini (mais novo):
+OPENAI_MODEL=gpt-4o-mini
+
+═══════════════════════════════════════════════════════════════
+💰 MONITORAR USO
+═══════════════════════════════════════════════════════════════
+
+1. Acesse: https://platform.openai.com/usage
+2. Veja quanto já usou dos $5 gratuitos
+3. Configure alertas de limite de gasto
+
+═══════════════════════════════════════════════════════════════
+🐛 SE DER ERRO
+═══════════════════════════════════════════════════════════════
+
+Erro: "OPENAI_API_KEY environment variable is required"
+→ Verifique se colocou a chave no .env
+→ Verifique se não tem espaços extras
+→ Reinicie: docker compose restart backend
+
+Erro: "Invalid API key"
+→ Verifique se copiou a chave completa (começa com sk-proj-)
+→ Gere uma nova chave em: https://platform.openai.com/api-keys
+
+Erro: "Rate limit exceeded"
+→ Aguarde 1 minuto e tente novamente
+→ Tier gratuito tem limite de requisições por minuto
+
+Erro: "Insufficient quota"
+→ Você usou todos os $5 gratuitos
+→ Adicione método de pagamento ou volte para Ollama
+
+═══════════════════════════════════════════════════════════════
+🔄 VOLTAR PARA OLLAMA (se quiser)
+═══════════════════════════════════════════════════════════════
+
+cat > .env << 'EOF'
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regulatory_ai
+LLM_TYPE=ollama
+OLLAMA_BASE_URL=http://172.31.5.241:11434
+OLLAMA_MODEL=llama2
+EOF
+
+docker compose restart backend
+
+═══════════════════════════════════════════════════════════════
+🎯 RECOMENDAÇÃO
+═══════════════════════════════════════════════════════════════
+
+Para DEMO/APRESENTAÇÃO: Use OpenAI (rápido, impressiona!)
+Para DESENVOLVIMENTO: Use Ollama (grátis, sem limite)
+Para PRODUÇÃO: Depende do volume e orçamento
+
+═══════════════════════════════════════════════════════════════

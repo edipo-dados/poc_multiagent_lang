@@ -1,0 +1,47 @@
+COMANDOS PARA EXECUTAR NO EC2 (copie e cole um por vez):
+
+=== PASSO 1: Parar Ollama do host ===
+sudo systemctl stop ollama
+sudo systemctl disable ollama
+sudo pkill -9 ollama
+
+=== PASSO 2: Verificar se porta está livre ===
+sudo ss -tlnp | grep 11434
+# Não deve retornar nada. Se retornar algo, execute novamente o PASSO 1
+
+=== PASSO 3: Parar containers atuais ===
+docker compose down
+
+=== PASSO 4: Iniciar Docker Compose com Ollama ===
+docker compose up -d
+
+=== PASSO 5: Aguardar Ollama iniciar (aguarde 15 segundos) ===
+sleep 15
+
+=== PASSO 6: Verificar se Ollama está rodando ===
+docker compose ps
+
+=== PASSO 7: Baixar modelo llama2 no Ollama do Docker ===
+docker compose exec ollama ollama pull llama2
+
+=== PASSO 8: Testar a aplicação ===
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+=== PASSO 9: Ver logs do backend ===
+docker compose logs -f backend
+
+---
+
+IMPORTANTE:
+- Agora o backend usa http://ollama:11434 (nome do serviço Docker)
+- Não precisa mais de IP fixo (172.31.5.241)
+- O Ollama roda dentro do Docker Compose
+- Modelo llama2 será baixado no volume Docker (persiste entre restarts)
+
+VANTAGENS:
+✅ Sem dependência de IP fixo
+✅ Ollama gerenciado pelo Docker Compose
+✅ Reinicia automaticamente com docker compose up
+✅ Modelo persiste no volume ollama_data

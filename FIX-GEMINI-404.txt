@@ -1,0 +1,70 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  🔧 FIX GEMINI 404 - Endpoint atualizado                     ║
+╚═══════════════════════════════════════════════════════════════╝
+
+O erro 404 foi causado pelo endpoint v1beta que não existe mais.
+Corrigido para usar v1 (versão estável).
+
+═══════════════════════════════════════════════════════════════
+🚀 COMANDOS PARA EXECUTAR NO EC2
+═══════════════════════════════════════════════════════════════
+
+# 1. Atualizar código
+cd ~/poc_multiagent_lang
+git pull origin main
+
+# 2. Rebuild do backend
+docker compose down
+docker compose build backend
+docker compose up -d
+
+# 3. Aguardar
+echo "Aguardando 15 segundos..."
+sleep 15
+
+# 4. Testar
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024 - Regulação sobre limites de crédito","repo_path":"/app/fake_pix_repo"}' \
+  | jq '.'
+
+───────────────────────────────────────────────────────────────
+
+COPIE TODO O BLOCO ACIMA
+
+═══════════════════════════════════════════════════════════════
+✅ RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+Logs devem mostrar:
+✅ "Initialized GeminiLLM with model=gemini-1.5-flash"
+✅ "Sentinel Agent completed successfully"
+✅ "Translator Agent completed successfully"
+
+SEM erro 404!
+
+Resposta em 2-5 segundos com dados estruturados completos.
+
+═══════════════════════════════════════════════════════════════
+🔍 VERIFICAR LOGS
+═══════════════════════════════════════════════════════════════
+
+docker compose logs backend --tail 50 | grep -E "(Gemini|ERROR|404)"
+
+Deve mostrar:
+- "Initialized GeminiLLM"
+- NÃO deve ter "404" ou "Not Found"
+
+═══════════════════════════════════════════════════════════════
+📊 O QUE FOI CORRIGIDO
+═══════════════════════════════════════════════════════════════
+
+ANTES (erro):
+https://generativelanguage.googleapis.com/v1beta/models/...
+                                                  ^^^^^^ (beta)
+
+DEPOIS (correto):
+https://generativelanguage.googleapis.com/v1/models/...
+                                           ^^ (stable)
+
+═══════════════════════════════════════════════════════════════
