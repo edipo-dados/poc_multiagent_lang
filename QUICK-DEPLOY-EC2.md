@@ -114,20 +114,50 @@ docker system prune -a
 ## ⚠️ Troubleshooting
 
 ### Erro: "port is already allocated" (porta 8000 em uso)
+
+**Solução 1: Usar o script de correção**
 ```bash
-# Parar todos os containers
-docker compose down
+./fix-port-conflict.sh
+./deploy.sh
+```
 
-# Verificar qual processo está usando a porta
+**Solução 2: Limpeza manual completa**
+```bash
+# Parar TODOS os containers
+docker stop $(docker ps -aq)
+docker rm $(docker ps -aq)
+
+# Parar docker compose
+docker compose down -v
+
+# Verificar processos nas portas
 sudo lsof -i :8000
+sudo lsof -i :8501
 
-# Matar o processo (substitua PID pelo número que apareceu)
+# Matar processos específicos (substitua PID)
 sudo kill -9 PID
 
-# Ou parar todos os containers Docker
-docker stop $(docker ps -aq)
+# Aguardar e tentar novamente
+sleep 5
+./deploy.sh
+```
+
+**Solução 3: Verificar containers antigos**
+```bash
+# Listar todos os containers (inclusive parados)
+docker ps -a
+
+# Remover containers específicos do projeto
+docker rm -f $(docker ps -a | grep poc_multiagent_lang | awk '{print $1}')
 
 # Tentar novamente
+./deploy.sh
+```
+
+**Solução 4: Reiniciar Docker (última opção)**
+```bash
+sudo systemctl restart docker
+sleep 10
 ./deploy.sh
 ```
 

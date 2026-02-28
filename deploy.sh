@@ -10,6 +10,7 @@ echo "🚀 Iniciando deploy da aplicação..."
 # Cores para output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Atualizar código do repositório
@@ -19,9 +20,14 @@ git pull origin main
 # Habilitar BuildKit para builds mais rápidos
 export DOCKER_BUILDKIT=1
 
-# Parar containers existentes
+# Parar containers existentes de forma mais agressiva
 echo -e "${BLUE}🛑 Parando containers existentes...${NC}"
-docker compose down
+docker compose down 2>/dev/null || true
+docker stop $(docker ps -aq) 2>/dev/null || true
+
+# Aguardar portas liberarem
+echo -e "${YELLOW}⏳ Aguardando portas liberarem...${NC}"
+sleep 5
 
 # Limpar volumes antigos (opcional - descomente se necessário)
 # docker compose down -v
