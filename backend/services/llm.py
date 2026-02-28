@@ -2,7 +2,7 @@
 LLM Provider Interface and Implementations
 
 This module provides a protocol-based interface for LLM providers and concrete
-implementations for Ollama, OpenAI, and a fallback local LLM.
+implementations for Ollama, OpenAI, Gemini, and a fallback local LLM.
 """
 
 import os
@@ -165,6 +165,63 @@ class OpenAILLM:
             raise
 
 
+class GeminiLLM:
+    """LLM provider using Google Gemini API."""
+    
+    def __init__(self, api_key: str, model: str = "gemini-1.5-flash"):
+        """
+        Initialize Gemini LLM provider.
+        
+        Args:
+            api_key: Google API key
+            model: Model name to use (default: gemini-1.5-flash)
+        """
+        self.api_key = api_key
+        self.model = model
+        logger.info(f"Initialized GeminiLLM with model={model}")
+    
+    def generate(self, prompt: str, max_tokens: int = 1000) -> str:
+        """
+        Generate text using Gemini API.
+        
+        Args:
+            prompt: The input prompt text
+            max_tokens: Maximum number of tokens to generate
+            
+        Returns:
+            Generated text response
+            
+        Raises:
+            requests.RequestException: If API call fails
+        """
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+            response = requests.post(
+                url,
+                headers={
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "contents": [{
+                        "parts": [{
+                            "text": prompt
+                        }]
+                    }],
+                    "generationConfig": {
+                        "maxOutputTokens": max_tokens,
+                        "temperature": 0.7
+                    }
+                },
+                timeout=30
+            )
+            response.raise_for_status()
+            result = response.json()
+            return result["candidates"][0]["content"]["parts"][0]["text"]
+        except requests.RequestException as e:
+            logger.error(f"Gemini API call failed: {e}")
+            raise
+
+
 def get_llm() -> LLMProvider:
     """
     Factory function to get the appropriate LLM provider.
@@ -173,7 +230,7 @@ def get_llm() -> LLMProvider:
     implementation. Defaults to "ollama" if not set.
     
     Environment Variables:
-        LLM_TYPE: Type of LLM to use ("ollama", "openai", or "local", default: "ollama")
+        LLM_TYPE: Type of LLM to use ("ollama", "openai", "gemini", or "local", default: "ollama")
         
         For Ollama:
             OLLAMA_BASE_URL: Base URL for Ollama API (default: http://localhost:11434)
@@ -183,6 +240,10 @@ def get_llm() -> LLMProvider:
             OPENAI_API_KEY: OpenAI API key (required)
             OPENAI_MODEL: Model name (default: gpt-3.5-turbo)
             OPENAI_BASE_URL: Base URL (default: https://api.openai.com/v1)
+        
+        For Gemini:
+            GEMINI_API_KEY: Google API key (required)
+            GEMINI_MODEL: Model name (default: gemini-1.5-flash)
     
     Returns:
         LLMProvider instance
@@ -203,7 +264,13 @@ def get_llm() -> LLMProvider:
         model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
         base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
         return OpenAILLM(api_key=api_key, model=model, base_url=base_url)
+    elif llm_type == "gemini":
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY environment variable is required for Gemini LLM")
+        model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        return GeminiLLM(api_key=api_key, model=model)
     elif llm_type == "local":
         return LocalLLM()
     else:
-        raise ValueError(f"Unknown LLM type: {llm_type}. Must be 'ollama', 'openai', or 'local'")
+        raise ValueError(f"Unknown LLM type: {llm_type}. Must be 'ollama', 'openai', 'gemini', or 'local'")
