@@ -1,179 +1,0 @@
-═══════════════════════════════════════════════════════════════
-🧹 LIMPAR TUDO E MIGRAR PARA GEMINI - EXECUTAR AGORA
-═══════════════════════════════════════════════════════════════
-
-✅ SCRIPT CRIADO: cleanup-and-switch-gemini.sh
-
-Este script faz TUDO automaticamente:
-  1. Para containers
-  2. Remove Ollama (host + Docker volume)
-  3. Limpa Docker (imagens, cache, volumes)
-  4. Configura Gemini no .env
-  5. Rebuild backend
-  6. Inicia serviços
-
-═══════════════════════════════════════════════════════════════
-📋 COMANDOS PARA EXECUTAR NO EC2
-═══════════════════════════════════════════════════════════════
-
-# 1. Ir para o diretório
-cd ~/poc_multiagent_lang
-
-# 2. Fazer pull das últimas mudanças
-git pull origin main
-
-# 3. Dar permissão de execução
-chmod +x cleanup-and-switch-gemini.sh
-
-# 4. Executar o script
-./cleanup-and-switch-gemini.sh
-
-# O script vai:
-#   🛑 Parar containers
-#   🗑️  Remover Ollama (host + volume)
-#   🗑️  Limpar Docker (imagens, cache)
-#   💾 Backup do .env
-#   ⚙️  Configurar Gemini
-#   🔨 Rebuild backend
-#   🚀 Iniciar serviços
-#   📊 Mostrar espaço liberado
-
-═══════════════════════════════════════════════════════════════
-💾 ESPAÇO QUE SERÁ LIBERADO
-═══════════════════════════════════════════════════════════════
-
-Ollama host: ~500MB
-Ollama models: ~4GB
-Ollama Docker volume: ~4GB
-Imagens Docker antigas: 1-3GB
-Cache de build: 500MB-1GB
-
-TOTAL ESPERADO: 8-12GB liberados!
-
-═══════════════════════════════════════════════════════════════
-⏱️  TEMPO ESTIMADO
-═══════════════════════════════════════════════════════════════
-
-Limpeza: ~2-3 minutos
-Rebuild: ~3-5 minutos
-TOTAL: ~5-8 minutos
-
-═══════════════════════════════════════════════════════════════
-✅ RESULTADO ESPERADO
-═══════════════════════════════════════════════════════════════
-
-Após executar o script:
-
-1. Espaço em disco:
-   ANTES: ~90% usado
-   DEPOIS: ~70-80% usado (8-12GB liberados)
-
-2. Serviços rodando:
-   ✅ postgres (porta 5433)
-   ✅ backend (porta 8000)
-   ✅ frontend (porta 8501)
-   ❌ ollama (removido)
-
-3. Configuração:
-   ✅ LLM_TYPE=gemini
-   ✅ GEMINI_API_KEY configurada
-   ✅ GEMINI_MODEL=gemini-2.0-flash
-
-═══════════════════════════════════════════════════════════════
-🔍 VERIFICAR APÓS EXECUÇÃO
-═══════════════════════════════════════════════════════════════
-
-# Ver logs do backend
-docker compose logs -f backend
-
-# Deve mostrar:
-# ✅ "Initialized GeminiLLM with model=models/gemini-2.0-flash"
-# ✅ "Application startup complete"
-
-# Pressione Ctrl+C para sair
-
-# Testar API
-curl -X POST http://localhost:8000/analyze \
-  -H 'Content-Type: application/json' \
-  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
-
-# Deve retornar:
-# ✅ Status 200 OK
-# ✅ Resposta em ~10-15 segundos
-# ✅ JSON completo com análise
-
-═══════════════════════════════════════════════════════════════
-🎯 VANTAGENS DA NOVA CONFIGURAÇÃO
-═══════════════════════════════════════════════════════════════
-
-✅ 8-12GB de espaço liberado
-✅ 20x mais rápido (2-5s vs 60s+ por request)
-✅ Sem problemas de RAM
-✅ Sem problemas de espaço em disco
-✅ Qualidade superior de resposta
-✅ Bug 404 do Gemini corrigido
-✅ Configuração mais simples
-✅ Menos recursos consumidos
-
-═══════════════════════════════════════════════════════════════
-🔧 SE DER ALGUM PROBLEMA
-═══════════════════════════════════════════════════════════════
-
-# Ver logs detalhados
-docker compose logs backend | tail -100
-
-# Verificar containers
-docker compose ps
-
-# Verificar .env
-cat .env
-
-# Verificar espaço em disco
-df -h
-
-# Reiniciar serviços
-docker compose restart
-
-# Ver erros específicos
-docker compose logs backend | grep ERROR
-
-═══════════════════════════════════════════════════════════════
-💡 DICAS
-═══════════════════════════════════════════════════════════════
-
-1. O script faz backup do .env antes de modificar
-   Backup em: .env.backup.YYYYMMDD_HHMMSS
-
-2. Se precisar voltar para Ollama (não recomendado):
-   cp .env.backup.* .env
-   docker compose up -d
-
-3. Para manter o servidor limpo:
-   Execute ./cleanup-server.sh semanalmente
-
-4. Monitore o espaço em disco:
-   df -h
-   docker system df
-
-═══════════════════════════════════════════════════════════════
-📊 MONITORAMENTO PÓS-MIGRAÇÃO
-═══════════════════════════════════════════════════════════════
-
-# Ver uso de recursos
-docker stats --no-stream
-
-# Ver espaço em disco
-df -h
-
-# Ver uso do Docker
-docker system df
-
-# Ver logs em tempo real
-docker compose logs -f
-
-# Testar performance
-time curl -X POST http://localhost:8000/analyze \
-  -H 'Content-Type: application/json' \
-  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
-
-# Deve completar em ~10-15 segundos

@@ -1,243 +1,287 @@
-# Regulatory AI POC
+# 🤖 POC Multi-Agent Regulatory AI
 
-Prova de conceito de arquitetura multi-agente que analisa texto regulatório, identifica impactos em código de serviço Pix, e gera especificações técnicas e prompts para desenvolvimento.
+Sistema multi-agente para análise automatizada de mudanças regulatórias e geração de especificações técnicas de implementação.
 
-## Visão Geral
+## 📋 Visão Geral
 
-O sistema usa LangGraph para orquestração determinística de seis agentes especializados:
+Esta POC demonstra um pipeline de 6 agentes especializados que trabalham em sequência para:
 
-1. **Sentinel Agent** - Detecta mudanças e avalia nível de risco
-2. **Translator Agent** - Estrutura o texto regulatório em modelo formal
-3. **CodeReader Agent** - Identifica arquivos relevantes usando busca semântica
-4. **Impact Agent** - Analisa impactos técnicos no código
-5. **SpecGenerator Agent** - Gera especificação técnica estruturada
-6. **KiroPrompt Agent** - Gera prompt determinístico para desenvolvimento
+1. **Detectar mudanças** em textos regulatórios
+2. **Extrair modelo estruturado** das regras
+3. **Identificar código impactado** via busca semântica
+4. **Analisar impactos** em cada arquivo
+5. **Gerar especificação técnica** de implementação
+6. **Criar prompt** para desenvolvimento
 
-## Tecnologias
+## 🏗️ Arquitetura
 
-- **Frontend**: Streamlit (interface web Python)
-- **Backend**: FastAPI (API assíncrona Python)
-- **Orquestração**: LangGraph (fluxo determinístico de agentes)
-- **Banco de Dados**: PostgreSQL com pgvector (busca semântica)
-- **LLM**: Modelos locais (sem APIs pagas)
-- **Deploy**: Docker Compose
+### Stack Tecnológico
 
-## Pré-requisitos
+- **Backend**: FastAPI + LangGraph
+- **Frontend**: Streamlit
+- **Database**: PostgreSQL + pgvector
+- **LLM**: Google Gemini 2.5 Flash
+- **Embeddings**: sentence-transformers/all-MiniLM-L6-v2
+- **Orquestração**: Docker Compose
 
-- **Docker** (versão 20.10 ou superior)
-- **Docker Compose** (versão 2.0 ou superior)
+### Agentes
 
-Verifique as instalações:
+```mermaid
+graph LR
+    Input[Texto Regulatório] --> Sentinel[1. Sentinel]
+    Sentinel --> Translator[2. Translator]
+    Translator --> CodeReader[3. CodeReader]
+    CodeReader --> Impact[4. Impact]
+    Impact --> SpecGen[5. SpecGenerator]
+    SpecGen --> KiroPrompt[6. KiroPrompt]
+    KiroPrompt --> Output[Prompt Final]
+```
+
+1. **Sentinel Agent**: Detecta se há mudança regulatória e avalia nível de risco
+2. **Translator Agent**: Extrai modelo estruturado (título, descrição, requisitos)
+3. **CodeReader Agent**: Busca arquivos de código relevantes via embeddings
+4. **Impact Agent**: Analisa impacto específico em cada arquivo
+5. **SpecGenerator Agent**: Gera especificação técnica de implementação
+6. **KiroPrompt Agent**: Cria prompt final para desenvolvimento
+
+## 🚀 Deploy Rápido (AWS EC2)
+
+### Pré-requisitos
+
+- EC2 instance (mínimo: t3.medium, 4GB RAM)
+- Ubuntu 22.04+
+- Docker + Docker Compose instalados
+- Chave API do Google Gemini
+
+### Passos
+
+1. **Clone o repositório**
 ```bash
-docker --version
-docker-compose --version
+git clone <repo-url>
+cd poc_multiagent_lang
 ```
 
-## Instalação e Execução
-
-### Início Rápido
-
-1. Clone o repositório:
+2. **Configure variáveis de ambiente**
 ```bash
-git clone <repository-url>
-cd regulatory-ai-poc
+cp .env.example .env
+nano .env
 ```
 
-2. Inicie todos os serviços:
+Edite:
+```env
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/regulatory_ai
+LLM_TYPE=gemini
+GEMINI_API_KEY=sua_chave_aqui
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+3. **Inicie os serviços**
 ```bash
-docker-compose up --build
+docker compose up -d
 ```
 
-Este comando irá:
-- Construir as imagens Docker para backend e frontend
-- Inicializar o PostgreSQL com extensão pgvector
-- Criar as tabelas necessárias (embeddings e audit_logs)
-- Iniciar todos os serviços
-
-3. Aguarde até ver as mensagens de inicialização:
-```
-backend_1   | INFO:     Application startup complete.
-frontend_1  | You can now view your Streamlit app in your browser.
-postgres_1  | database system is ready to accept connections
+4. **Popule embeddings do código**
+```bash
+python3 populate-inline.py
 ```
 
-4. Acesse as interfaces:
-   - **Frontend**: http://localhost:8501
-   - **Backend API**: http://localhost:8000
-   - **API Docs**: http://localhost:8000/docs
-   - **PostgreSQL**: localhost:5432 (usuário: postgres, senha: postgres)
+5. **Acesse a aplicação**
+- Frontend: `http://<seu-ip>:8501`
+- Backend API: `http://<seu-ip>:8000/docs`
 
-### Parar os Serviços
+## 📖 Uso
+
+### Via Frontend (Streamlit)
+
+1. Acesse `http://<seu-ip>:8501`
+2. (Opcional) Insira sua chave API do Gemini
+3. Cole o texto regulatório
+4. Clique em "Analisar"
+5. Visualize os resultados em 5 abas:
+   - Modelo Regulatório Estruturado
+   - Impacto no Código
+   - Especificação Técnica
+   - Prompt Final
+   - Fluxo de Execução (diagrama Mermaid)
+
+### Via API (curl)
 
 ```bash
-docker-compose down
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -H 'X-Gemini-API-Key: sua_chave_aqui' \
+  -d '{
+    "regulatory_text": "RESOLUÇÃO BCB Nº 789/2024 - Estabelece regras para validação de chaves Pix",
+    "repo_path": "/app/fake_pix_repo"
+  }'
 ```
 
-Para remover também os volumes (dados do banco):
+## 🛠️ Scripts Úteis
+
+### Rebuild Limpo (economiza espaço em disco)
 ```bash
-docker-compose down -v
+./rebuild-clean.sh
 ```
 
-## Estrutura do Projeto
+Remove containers, imagens, volumes e cache antes de rebuildar.
+
+### Rebuild apenas Frontend
+```bash
+./rebuild-frontend.sh
+```
+
+### Verificar Status
+```bash
+./check-status.sh
+```
+
+### Verificar Embeddings
+```bash
+./CHECK-EMBEDDINGS.sh
+```
+
+## 📁 Estrutura do Projeto
 
 ```
 .
-├── backend/              # API FastAPI e agentes
-│   ├── agents/          # Implementação dos 6 agentes
-│   ├── database/        # Modelos e conexão do banco
-│   ├── models/          # Modelos de dados Pydantic
-│   ├── orchestrator/    # Orquestração LangGraph
-│   ├── services/        # Serviços (LLM, embeddings, vector store)
-│   ├── scripts/         # Scripts utilitários
-│   └── tests/           # Testes unitários e de integração
-├── frontend/            # Interface Streamlit
-├── fake_pix_repo/       # Repositório fake para testes
-└── init.sql            # Script de inicialização do banco
+├── backend/
+│   ├── agents/           # 6 agentes especializados
+│   ├── database/         # Modelos e conexão
+│   ├── models/           # Pydantic models
+│   ├── orchestrator/     # LangGraph workflow
+│   ├── scripts/          # Scripts de setup
+│   ├── services/         # LLM, embeddings, vector store
+│   └── tests/            # Testes unitários e integração
+├── frontend/
+│   └── app.py            # Interface Streamlit
+├── fake_pix_repo/        # Repositório exemplo (Pix)
+├── docker-compose.yml
+├── .env.example
+└── README.md
 ```
 
-## Configuração
+## 🔧 Configuração Avançada
 
-### Variáveis de Ambiente
+### Trocar Modelo LLM
 
-O sistema usa as seguintes variáveis de ambiente (já configuradas no docker-compose.yml):
+Edite `.env`:
+```env
+# Gemini (padrão)
+LLM_TYPE=gemini
+GEMINI_API_KEY=sua_chave
+GEMINI_MODEL=gemini-2.5-flash
 
-#### PostgreSQL
-- `POSTGRES_DB`: Nome do banco de dados (padrão: `regulatory_ai`)
-- `POSTGRES_USER`: Usuário do banco (padrão: `postgres`)
-- `POSTGRES_PASSWORD`: Senha do banco (padrão: `postgres`)
-
-#### Backend
-- `DATABASE_URL`: URL de conexão com PostgreSQL (padrão: `postgresql://postgres:postgres@postgres:5432/regulatory_ai`)
-- `PIX_REPO_PATH`: Caminho para o repositório fake Pix (padrão: `/app/fake_pix_repo`)
-
-#### Frontend
-- `BACKEND_URL`: URL do backend (padrão: `http://backend:8000`)
-
-### Personalização
-
-Para alterar as configurações, edite o arquivo `docker-compose.yml` antes de executar `docker-compose up`.
-
-### Portas Utilizadas
-
-- **8501**: Frontend Streamlit
-- **8000**: Backend FastAPI
-- **5432**: PostgreSQL
-
-Certifique-se de que essas portas estão disponíveis antes de iniciar os serviços.
-
-## Uso
-
-1. Acesse o frontend em http://localhost:8501
-2. Cole o texto regulatório na área de texto
-3. Clique em "Analisar Impacto"
-4. Aguarde o processamento (pode levar alguns segundos)
-5. Visualize os resultados em 5 abas:
-   - **Modelo Regulatório Estruturado**: JSON com estrutura formal do texto regulatório
-   - **Impacto no Código**: Lista de arquivos impactados com análise de severidade
-   - **Especificação Técnica**: Documento Markdown com especificação completa
-   - **Prompt Final para Desenvolvimento**: Prompt executável para implementação
-   - **Fluxo de Execução dos Agentes**: Diagrama Mermaid mostrando o fluxo de execução
-
-## Características
-
-- ✅ Execução 100% local (sem APIs pagas)
-- ✅ Orquestração determinística de agentes
-- ✅ Busca semântica com pgvector
-- ✅ Logs de auditoria completos
-- ✅ Visualização do fluxo de agentes
-- ✅ Interface web intuitiva
-
-## Troubleshooting
-
-### Porta já em uso
-Se alguma porta estiver em uso, você pode alterá-la no `docker-compose.yml`:
-```yaml
-ports:
-  - "8502:8501"  # Altera frontend para porta 8502
+# OpenAI (alternativa)
+LLM_TYPE=openai
+OPENAI_API_KEY=sua_chave
+OPENAI_MODEL=gpt-4
 ```
 
-### Erro de conexão com banco de dados
-Aguarde alguns segundos após o `docker-compose up` para que o PostgreSQL inicialize completamente. O backend aguarda automaticamente o health check do banco.
-
-### Reconstruir imagens
-Se houver problemas após atualizar o código:
+Depois:
 ```bash
-docker-compose down
-docker-compose build --no-cache
-docker-compose up
+docker compose down
+docker compose up -d
 ```
 
-### Ver logs de um serviço específico
+### Adicionar Novo Repositório
+
+1. Copie seu código para dentro do container:
 ```bash
-docker-compose logs backend
-docker-compose logs frontend
-docker-compose logs postgres
+docker cp /caminho/local backend:/app/seu_repo
 ```
 
-### Acessar o banco de dados diretamente
-```bash
-docker-compose exec postgres psql -U postgres -d regulatory_ai
+2. Popule embeddings:
+```python
+# Edite populate-inline.py
+REPO_PATH = "/app/seu_repo"
 ```
 
-## Desenvolvimento
-
-### Executar testes
+3. Execute:
 ```bash
+python3 populate-inline.py
+```
+
+## 🧪 Testes
+
+```bash
+# Todos os testes
 cd backend
 pytest
+
+# Testes específicos
+pytest tests/test_orchestrator.py
+pytest tests/integration/test_e2e.py
+
+# Com coverage
+pytest --cov=. --cov-report=html
 ```
 
-### Adicionar novos arquivos ao repositório fake Pix
-1. Adicione arquivos Python em `fake_pix_repo/`
-2. Execute o script de inicialização de embeddings:
+## 📊 Performance
+
+- **Tempo médio de análise**: 15-20 segundos
+- **Sentinel**: ~2s
+- **Translator**: ~3s
+- **CodeReader**: ~2s
+- **Impact**: ~5s (depende do número de arquivos)
+- **SpecGen**: ~2s
+- **KiroPrompt**: ~1s
+
+## ⚠️ Limitações Conhecidas
+
+1. **CodeReader**: Busca semântica pode não encontrar matches se:
+   - Texto regulatório muito diferente do código
+   - Código sem comentários/docstrings
+   - Threshold de similaridade muito alto
+
+2. **Gemini API**: 
+   - Requer chave válida (free tier: 15 RPM)
+   - Thinking mode usa tokens internos (precisa max_tokens >= 100)
+
+3. **Recursos**:
+   - Mínimo 4GB RAM
+   - ~10GB espaço em disco
+
+## 🐛 Troubleshooting
+
+### Backend não inicia
 ```bash
-docker-compose exec backend python scripts/init_embeddings.py
+docker compose logs backend --tail=50
 ```
 
-### Estrutura de dados
+Causas comuns:
+- `.env` não carregado (use `docker compose down` + `up`, não `restart`)
+- Porta 8000 em uso
+- PostgreSQL não iniciou
 
-O sistema mantém dois tipos de dados no PostgreSQL:
-
-1. **Embeddings**: Vetores semânticos dos arquivos do repositório Pix
-2. **Audit Logs**: Histórico completo de todas as análises executadas
-
-Consulte `.kiro/specs/regulatory-ai-poc/` para documentação detalhada de requisitos, design e tarefas.
-
-## API Endpoints
-
-### POST /analyze
-Analisa texto regulatório e retorna resultados completos.
-
-**Request:**
-```json
-{
-  "regulatory_text": "string"
-}
+### Frontend em branco
+```bash
+docker compose down frontend
+docker compose up -d --build frontend
 ```
 
-**Response:**
-```json
-{
-  "execution_id": "uuid",
-  "change_detected": true,
-  "risk_level": "high",
-  "regulatory_model": {...},
-  "impacted_files": [...],
-  "impact_analysis": [...],
-  "technical_spec": "markdown string",
-  "kiro_prompt": "string",
-  "graph_visualization": "mermaid string"
-}
+### Embeddings vazios
+```bash
+./CHECK-EMBEDDINGS.sh
 ```
 
-### GET /health
-Verifica status dos serviços.
+Se vazio, execute:
+```bash
+python3 populate-inline.py
+```
 
-### GET /audit/{execution_id}
-Recupera log de auditoria de uma execução específica.
+### Gemini API 403/404
+- Verifique se a chave está válida
+- Gere nova chave em: https://aistudio.google.com/apikey
+- Atualize `.env` e faça `docker compose down` + `up`
 
-Documentação completa da API: http://localhost:8000/docs
+## 📝 Licença
 
-## Licença
+MIT
 
-Este é um projeto de prova de conceito para fins educacionais.
+## 🤝 Contribuindo
+
+PRs são bem-vindos! Para mudanças grandes, abra uma issue primeiro.
+
+## 📧 Contato
+
+Para dúvidas ou sugestões, abra uma issue no repositório.

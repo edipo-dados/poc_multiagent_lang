@@ -1,141 +1,0 @@
-═══════════════════════════════════════════════════════════════
-🧹 GUIA DE LIMPEZA DO SERVIDOR EC2
-═══════════════════════════════════════════════════════════════
-
-📁 ARQUIVO CRIADO: cleanup-server.sh
-
-═══════════════════════════════════════════════════════════════
-🚀 COMO USAR
-═══════════════════════════════════════════════════════════════
-
-# 1. Dar permissão de execução
-chmod +x cleanup-server.sh
-
-# 2. Executar o script
-./cleanup-server.sh
-
-═══════════════════════════════════════════════════════════════
-🗑️  O QUE O SCRIPT LIMPA
-═══════════════════════════════════════════════════════════════
-
-DOCKER:
-✅ Containers parados (docker ps -a | grep Exited)
-✅ Imagens dangling (sem tag, <none>)
-✅ Imagens não utilizadas (não referenciadas)
-✅ Volumes órfãos (não conectados a containers)
-✅ Redes não utilizadas
-✅ Cache de build (layers intermediários)
-
-SISTEMA:
-✅ Logs do journald (mantém últimos 7 dias)
-✅ Arquivos em /tmp (mais de 7 dias)
-✅ Cache do apt (Ubuntu/Debian)
-✅ Cache do pip (Python)
-✅ Arquivos .log grandes (>100MB)
-
-═══════════════════════════════════════════════════════════════
-💾 ESPAÇO TÍPICO LIBERADO
-═══════════════════════════════════════════════════════════════
-
-- Imagens Docker antigas: 1-5 GB
-- Cache de build: 500 MB - 2 GB
-- Logs do sistema: 100-500 MB
-- Volumes órfãos: 100 MB - 1 GB
-- Cache apt/pip: 50-200 MB
-
-TOTAL ESPERADO: 2-8 GB liberados
-
-═══════════════════════════════════════════════════════════════
-⚠️  AVISOS IMPORTANTES
-═══════════════════════════════════════════════════════════════
-
-1. ✅ SEGURO: O script NÃO remove:
-   - Containers em execução
-   - Imagens usadas por containers ativos
-   - Volumes em uso
-   - Arquivos do projeto
-
-2. ⚠️  CUIDADO: O script REMOVE:
-   - Imagens Docker antigas (pode precisar rebuild)
-   - Containers parados (histórico perdido)
-   - Logs antigos (>7 dias)
-
-3. 💡 RECOMENDAÇÃO:
-   - Execute antes de fazer deploy de nova versão
-   - Execute semanalmente em produção
-   - Verifique espaço antes: df -h
-
-═══════════════════════════════════════════════════════════════
-🔍 COMANDOS ÚTEIS PARA DIAGNÓSTICO
-═══════════════════════════════════════════════════════════════
-
-# Ver espaço em disco
-df -h
-
-# Ver uso de espaço por diretório
-du -sh /* 2>/dev/null | sort -h
-
-# Ver tamanho do Docker
-docker system df
-
-# Ver imagens Docker
-docker images
-
-# Ver containers (todos)
-docker ps -a
-
-# Ver volumes Docker
-docker volume ls
-
-# Ver espaço usado por logs
-sudo journalctl --disk-usage
-
-═══════════════════════════════════════════════════════════════
-🔧 LIMPEZA MANUAL ADICIONAL (SE NECESSÁRIO)
-═══════════════════════════════════════════════════════════════
-
-# Remover TUDO do Docker (CUIDADO!)
-docker system prune -a --volumes -f
-
-# Limpar logs do journald completamente
-sudo journalctl --vacuum-size=100M
-
-# Remover pacotes não utilizados (Ubuntu)
-sudo apt-get autoremove -y
-
-# Limpar cache do npm (se usar Node.js)
-npm cache clean --force
-
-═══════════════════════════════════════════════════════════════
-📅 AGENDAMENTO AUTOMÁTICO (OPCIONAL)
-═══════════════════════════════════════════════════════════════
-
-Para executar automaticamente toda semana:
-
-# Editar crontab
-crontab -e
-
-# Adicionar linha (executa todo domingo às 3h da manhã)
-0 3 * * 0 /home/ubuntu/poc_multiagent_lang/cleanup-server.sh >> /home/ubuntu/cleanup.log 2>&1
-
-═══════════════════════════════════════════════════════════════
-✅ EXEMPLO DE SAÍDA ESPERADA
-═══════════════════════════════════════════════════════════════
-
-📊 ANTES DA LIMPEZA:
-💾 Espaço em disco:
-/dev/xvda1       20G   18G  2.0G  90% /
-
-🗑️  [1/8] Removendo containers parados...
-   ✅ Containers parados removidos
-
-🗑️  [2/8] Removendo imagens dangling...
-   ✅ Imagens dangling removidas
-
-... (continua)
-
-📊 DEPOIS DA LIMPEZA:
-💾 Espaço em disco:
-/dev/xvda1       20G   14G  6.0G  70% /
-
-✅ Liberados: ~4GB

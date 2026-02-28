@@ -246,25 +246,50 @@ def render_graph_visualization_tab(results: dict):
     if graph_visualization:
         st.markdown("### Diagrama de Fluxo dos Agentes")
         
-        # Show as formatted text (simple and always works)
-        st.markdown("**Fluxo de Execução:**")
+        # Render using HTML + Mermaid CDN (most reliable for Streamlit)
+        mermaid_html = f"""
+        <div class="mermaid-container">
+            <script type="module">
+                import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+                mermaid.initialize({{ 
+                    startOnLoad: true,
+                    theme: 'default',
+                    flowchart: {{
+                        useMaxWidth: true,
+                        htmlLabels: true,
+                        curve: 'basis'
+                    }}
+                }});
+            </script>
+            <div class="mermaid">
+{graph_visualization}
+            </div>
+        </div>
+        <style>
+            .mermaid-container {{
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 10px 0;
+            }}
+        </style>
+        """
         
-        # Parse and display in a cleaner format
-        lines = graph_visualization.split('\n')
-        for line in lines:
-            line = line.strip()
-            if line and not line.startswith('graph'):
-                # Clean up the line for display
-                clean_line = line.replace('-->', '→').replace('[', '**').replace(']', '**').replace('<br/>', ' | ')
-                st.markdown(f"- {clean_line}")
+        st.components.v1.html(mermaid_html, height=600, scrolling=True)
+        
+        # Fallback: Show as formatted text
+        with st.expander("📋 Ver como texto formatado"):
+            lines = graph_visualization.split('\n')
+            for line in lines:
+                line = line.strip()
+                if line and not line.startswith('graph'):
+                    clean_line = line.replace('-->', '→').replace('[', '**').replace(']', '**').replace('<br/>', ' | ')
+                    st.markdown(f"- {clean_line}")
         
         # Show full Mermaid code in expander
-        with st.expander("📊 Ver diagrama interativo (Mermaid)"):
+        with st.expander("📊 Copiar código Mermaid"):
             st.markdown("""
-            **Visualize o diagrama completo:**
-            1. Copie o código abaixo
-            2. Cole em [Mermaid Live Editor](https://mermaid.live)
-            3. Veja o diagrama interativo
+            **Visualize em [Mermaid Live Editor](https://mermaid.live):**
             """)
             st.code(graph_visualization, language="mermaid")
     else:
