@@ -32,8 +32,10 @@ def populate_embeddings():
     embedding_service = EmbeddingService()
     
     # Connect to PostgreSQL
+    # Use 'postgres' hostname when running in Docker, 'localhost' otherwise
+    db_host = os.getenv("DB_HOST", "postgres")
     conn = psycopg2.connect(
-        host="localhost",
+        host=db_host,
         port=5432,
         database="regulatory_ai",
         user="postgres",
@@ -42,7 +44,15 @@ def populate_embeddings():
     cur = conn.cursor()
     
     # Files to embed
-    repo_path = Path("fake_pix_repo")
+    # Use /app/fake_pix_repo when in Docker, ./fake_pix_repo when local
+    repo_base = os.getenv("PIX_REPO_PATH", "fake_pix_repo")
+    repo_path = Path(repo_base)
+    
+    if not repo_path.exists():
+        print(f"❌ Erro: Repositório não encontrado em {repo_path}")
+        print(f"   Verifique se o volume está montado corretamente")
+        return
+    
     files_to_embed = [
         "api/endpoints.py",
         "api/schemas.py",
@@ -72,7 +82,7 @@ def populate_embeddings():
         # Upsert into database
         print(f"    Salvando no banco...")
         cur.execute("""
-            INSERT INTO embeddings (file_path, content, embedding)
+            INSERT INTO code_embeddings (file_path, content, embedding)
             VALUES (%s, %s, %s::vector)
             ON CONFLICT (file_path) 
             DO UPDATE SET 
@@ -86,7 +96,7 @@ def populate_embeddings():
         print()
     
     # Verify
-    cur.execute("SELECT COUNT(*) FROM embeddings")
+    cur.execute("SELECT COUNT(*) FROM code_embeddings")
     count = cur.fetchone()[0]
     print(f"✓ Total de embeddings no banco: {count}")
     
