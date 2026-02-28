@@ -37,6 +37,13 @@ EOF
 ### 5️⃣ Executar Deploy
 ```bash
 chmod +x deploy.sh
+chmod +x fix-port-conflict.sh
+./deploy.sh
+```
+
+**Se der erro de porta em uso:**
+```bash
+./fix-port-conflict.sh
 ./deploy.sh
 ```
 
@@ -105,6 +112,24 @@ docker system prune -a
 ```
 
 ## ⚠️ Troubleshooting
+
+### Erro: "port is already allocated" (porta 8000 em uso)
+```bash
+# Parar todos os containers
+docker compose down
+
+# Verificar qual processo está usando a porta
+sudo lsof -i :8000
+
+# Matar o processo (substitua PID pelo número que apareceu)
+sudo kill -9 PID
+
+# Ou parar todos os containers Docker
+docker stop $(docker ps -aq)
+
+# Tentar novamente
+./deploy.sh
+```
 
 ### Container não inicia
 ```bash
