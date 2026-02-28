@@ -69,7 +69,7 @@ async def code_reader_agent(state: GlobalState) -> GlobalState:
             impacted_files = await vector_store.search_similar(
                 query_embedding=query_embedding,
                 top_k=10,
-                threshold=0.1  # Lower threshold to find more results
+                threshold=0.0  # No threshold - always return top 10
             )
         
         # Step 4: Update Global State with impacted_files
@@ -102,18 +102,19 @@ async def code_reader_agent(state: GlobalState) -> GlobalState:
 
 def _generate_search_query(regulatory_model: dict) -> str:
     """
-    Generate search query by combining regulatory model fields.
+    Generate search query by combining regulatory model fields with domain keywords.
     
     Combines title, requirements, and affected_systems to create a
     comprehensive search query that captures the semantic meaning
-    of the regulatory change.
+    of the regulatory change. Adds domain-specific keywords to improve
+    cross-domain similarity matching.
     
     Args:
         regulatory_model: Dict with title, description, requirements, 
                          deadlines, affected_systems
         
     Returns:
-        Search query string combining relevant fields
+        Search query string combining relevant fields and keywords
     """
     query_parts = []
     
@@ -137,12 +138,35 @@ def _generate_search_query(regulatory_model: dict) -> str:
         systems_text = " ".join(affected_systems)
         query_parts.append(f"Systems: {systems_text}")
     
+    # Add domain-specific keywords to improve matching
+    # These keywords bridge the gap between regulatory text and code
+    domain_keywords = [
+        "pix", "payment", "pagamento", "instant", "instantaneo",
+        "validation", "validacao", "validação", "validator",
+        "key", "chave", "cpf", "cnpj", "email", "phone", "telefone",
+        "api", "endpoint", "schema", "model", "database",
+        "create", "criar", "update", "atualizar", "delete", "deletar",
+        "check", "verificar", "validate", "validar"
+    ]
+    
+    # Add keywords that appear in title or description
+    text_lower = (regulatory_model.get("title", "") + " " + 
+                  regulatory_model.get("description", "")).lower()
+    
+    relevant_keywords = [kw for kw in domain_keywords if kw in text_lower]
+    if relevant_keywords:
+        query_parts.append(" ".join(relevant_keywords))
+    else:
+        # If no keywords match, add generic payment/validation keywords
+        query_parts.append("pix payment validation key chave validacao")
+    
     # Combine all parts with spaces
     search_query = " ".join(query_parts)
     
     logger.debug(f"Search query components: title={bool(regulatory_model.get('title'))}, "
                 f"description={bool(regulatory_model.get('description'))}, "
                 f"requirements={len(requirements)}, "
-                f"affected_systems={len(affected_systems)}")
+                f"affected_systems={len(affected_systems)}, "
+                f"keywords={len(relevant_keywords) if relevant_keywords else 'generic'}")
     
     return search_query
