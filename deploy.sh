@@ -21,14 +21,14 @@ export DOCKER_BUILDKIT=1
 
 # Parar containers existentes
 echo -e "${BLUE}🛑 Parando containers existentes...${NC}"
-docker-compose down
+docker compose down
 
 # Limpar volumes antigos (opcional - descomente se necessário)
-# docker-compose down -v
+# docker compose down -v
 
 # Build e start dos containers
 echo -e "${BLUE}🔨 Buildando e iniciando containers...${NC}"
-docker-compose up -d --build
+docker compose up -d --build
 
 # Aguardar containers iniciarem
 echo -e "${BLUE}⏳ Aguardando containers iniciarem...${NC}"
@@ -36,7 +36,7 @@ sleep 10
 
 # Verificar status
 echo -e "${BLUE}📊 Status dos containers:${NC}"
-docker-compose ps
+docker compose ps
 
 # Testar health check
 echo -e "${BLUE}🏥 Testando health check do backend...${NC}"
@@ -50,4 +50,4 @@ echo "  Frontend: http://$(curl -s ifconfig.me):8501"
 echo "  Backend:  http://$(curl -s ifconfig.me):8000"
 echo ""
 echo "Para ver logs:"
-echo "  docker-compose logs -f"
+echo "  docker compose logs -f"

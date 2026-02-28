@@ -51,36 +51,36 @@ cd ~/poc_multiagent_lang
 
 ### Ver logs em tempo real
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### Ver logs de um serviço específico
 ```bash
-docker-compose logs -f backend
-docker-compose logs -f frontend
+docker compose logs -f backend
+docker compose logs -f frontend
 ```
 
 ### Restart de um serviço
 ```bash
-docker-compose restart backend
-docker-compose restart frontend
+docker compose restart backend
+docker compose restart frontend
 ```
 
 ### Parar tudo
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Limpar tudo e recomeçar
 ```bash
-docker-compose down -v
+docker compose down -v
 docker system prune -a -f
 ./deploy.sh
 ```
 
 ### Ver status dos containers
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 ### Testar backend
@@ -100,12 +100,12 @@ curl http://localhost:8000/health
 ### Container não inicia
 ```bash
 # Ver logs detalhados
-docker-compose logs backend
+docker compose logs backend
 
 # Rebuild forçado
-docker-compose down
-docker-compose build --no-cache backend
-docker-compose up -d
+docker compose down
+docker compose build --no-cache backend
+docker compose up -d
 ```
 
 ### Erro de memória
@@ -117,8 +117,8 @@ docker system prune -a -f
 ### Banco de dados com problema
 ```bash
 # Resetar banco (CUIDADO: apaga dados)
-docker-compose down -v
-docker-compose up -d
+docker compose down -v
+docker compose up -d
 ```
 
 ## Monitoramento
@@ -138,10 +138,10 @@ docker system df
 
 ### Backup do banco de dados
 ```bash
-docker-compose exec postgres pg_dump -U postgres regulatory_ai > backup.sql
+docker compose exec postgres pg_dump -U postgres regulatory_ai > backup.sql
 ```
 
 ### Restaurar backup
 ```bash
-cat backup.sql | docker-compose exec -T postgres psql -U postgres regulatory_ai
+cat backup.sql | docker compose exec -T postgres psql -U postgres regulatory_ai
 ```
