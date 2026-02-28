@@ -195,7 +195,7 @@ class GeminiLLM:
             requests.RequestException: If API call fails
         """
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1/models/{self.model}:generateContent?key={self.api_key}"
             response = requests.post(
                 url,
                 headers={
