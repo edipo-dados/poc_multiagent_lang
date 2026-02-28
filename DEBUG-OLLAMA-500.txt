@@ -1,0 +1,126 @@
+═══════════════════════════════════════════════════════════════
+🔍 DEBUG ERRO 500 DO OLLAMA
+═══════════════════════════════════════════════════════════════
+
+ERRO: 500 Server Error: Internal Server Error
+
+═══════════════════════════════════════════════════════════════
+📋 COMANDOS PARA DIAGNOSTICAR
+═══════════════════════════════════════════════════════════════
+
+# 1. Ver logs do backend (últimas 50 linhas)
+docker compose logs --tail=50 backend
+
+# 2. Ver logs do Ollama
+docker compose logs --tail=50 ollama
+
+# 3. Verificar se Ollama está rodando
+docker compose ps
+
+# 4. Verificar se modelo llama2 está baixado
+docker compose exec ollama ollama list
+
+# 5. Testar Ollama diretamente
+docker compose exec ollama ollama run llama2 "Hello"
+
+# 6. Verificar conectividade do backend para Ollama
+docker compose exec backend curl -s http://ollama:11434/api/tags
+
+═══════════════════════════════════════════════════════════════
+🔧 POSSÍVEIS CAUSAS E SOLUÇÕES
+═══════════════════════════════════════════════════════════════
+
+CAUSA 1: Modelo llama2 não foi baixado
+SOLUÇÃO:
+  docker compose exec ollama ollama pull llama2
+  # Aguardar download (~4GB, pode demorar 5-10 min)
+
+CAUSA 2: Ollama não iniciou corretamente
+SOLUÇÃO:
+  docker compose restart ollama
+  sleep 30
+  docker compose exec ollama ollama list
+
+CAUSA 3: Backend não consegue conectar no Ollama
+SOLUÇÃO:
+  # Verificar se estão na mesma rede Docker
+  docker network inspect poc_multiagent_lang_default
+  
+  # Testar conectividade
+  docker compose exec backend ping -c 3 ollama
+
+CAUSA 4: Timeout na requisição (Ollama muito lento)
+SOLUÇÃO:
+  # Aumentar timeout no código ou usar modelo menor
+  # Ou trocar para Gemini API (mais rápido)
+
+CAUSA 5: Memória insuficiente
+SOLUÇÃO:
+  # Verificar uso de memória
+  docker stats --no-stream
+  
+  # Se necessário, usar Gemini em vez de Ollama
+
+═══════════════════════════════════════════════════════════════
+🚀 SOLUÇÃO RÁPIDA: TROCAR PARA GEMINI
+═══════════════════════════════════════════════════════════════
+
+Se Ollama continuar com problemas, use Gemini (mais rápido e confiável):
+
+# 1. Parar containers
+docker compose down
+
+# 2. Editar .env
+nano .env
+
+# Mudar de:
+LLM_TYPE=ollama
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=llama2
+
+# Para:
+LLM_TYPE=gemini
+GEMINI_API_KEY=AIzaSyBVk3MFe3zRRGVMaEslphM3Vd85oS5Rz44
+GEMINI_MODEL=gemini-2.0-flash
+
+# 3. Subir sem Ollama (economiza recursos)
+docker compose up -d postgres backend frontend
+
+# 4. Testar
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+📊 COMPARAÇÃO: OLLAMA vs GEMINI
+═══════════════════════════════════════════════════════════════
+
+OLLAMA (Local):
+  ✅ Grátis
+  ✅ Privacidade total
+  ❌ Lento (60+ segundos por request)
+  ❌ Usa ~4GB de disco
+  ❌ Usa muita RAM (~2-4GB)
+  ❌ Requer download de modelo
+
+GEMINI (API):
+  ✅ Rápido (2-5 segundos por request)
+  ✅ Não usa recursos locais
+  ✅ Modelos mais avançados
+  ✅ Sem setup necessário
+  ❌ Requer API key
+  ❌ Tem limites de rate (mas generosos)
+
+═══════════════════════════════════════════════════════════════
+💡 RECOMENDAÇÃO
+═══════════════════════════════════════════════════════════════
+
+Para POC/desenvolvimento: Use GEMINI
+  - Mais rápido
+  - Menos problemas
+  - Economiza recursos do EC2
+
+Para produção com dados sensíveis: Use OLLAMA
+  - Dados não saem do servidor
+  - Sem custos de API
+  - Mas precisa de servidor maior (t3.medium ou maior)

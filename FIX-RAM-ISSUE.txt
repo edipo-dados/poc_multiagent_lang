@@ -1,0 +1,136 @@
+═══════════════════════════════════════════════════════════════
+❌ PROBLEMA: RAM INSUFICIENTE PARA OLLAMA
+═══════════════════════════════════════════════════════════════
+
+ERRO IDENTIFICADO:
+  model request too large for system
+  requested="5.5 GiB" 
+  available="4.3 GiB"
+  total="7.6 GiB"
+
+CAUSA:
+  - Instância t3.small tem 8GB RAM total
+  - Sistema operacional usa ~3.7GB
+  - Sobram apenas 4.3GB livres
+  - llama2 precisa de 5.5GB para rodar
+  - IMPOSSÍVEL rodar Ollama nesta instância!
+
+═══════════════════════════════════════════════════════════════
+✅ SOLUÇÃO: USAR GEMINI API (ÚNICA OPÇÃO VIÁVEL)
+═══════════════════════════════════════════════════════════════
+
+# 1. Parar todos os containers
+cd ~/poc_multiagent_lang
+docker compose down
+
+# 2. Editar .env
+nano .env
+
+# 3. Apagar estas linhas:
+LLM_TYPE=ollama
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=llama2
+
+# 4. Adicionar estas linhas:
+LLM_TYPE=gemini
+GEMINI_API_KEY=AIzaSyBVk3MFe3zRRGVMaEslphM3Vd85oS5Rz44
+GEMINI_MODEL=gemini-2.0-flash
+
+# 5. Salvar e sair
+# Ctrl+O, Enter, Ctrl+X
+
+# 6. Subir APENAS os serviços necessários (SEM Ollama)
+docker compose up -d postgres backend frontend
+
+# 7. Verificar que está rodando
+docker compose ps
+
+# 8. Ver logs
+docker compose logs -f backend
+
+# 9. Testar API (deve funcionar em 2-5 segundos!)
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+💾 LIBERAR ESPAÇO (OPCIONAL)
+═══════════════════════════════════════════════════════════════
+
+Já que não vai usar Ollama, pode remover:
+
+# 1. Remover volume do Ollama (~4GB)
+docker volume rm poc_multiagent_lang_ollama_data
+
+# 2. Remover Ollama do host (se instalado)
+sudo systemctl stop ollama 2>/dev/null
+sudo systemctl disable ollama 2>/dev/null
+sudo rm -rf /usr/local/bin/ollama
+sudo rm -rf ~/.ollama
+
+# 3. Limpar imagens Docker não usadas
+docker image prune -a -f
+
+═══════════════════════════════════════════════════════════════
+📊 COMPARAÇÃO: T3.SMALL vs REQUISITOS
+═══════════════════════════════════════════════════════════════
+
+T3.SMALL (atual):
+  RAM Total: 8GB
+  RAM Disponível: ~4.3GB
+  ❌ Insuficiente para Ollama (precisa 5.5GB)
+  ✅ Suficiente para Gemini API (usa ~500MB)
+
+T3.MEDIUM (upgrade necessário para Ollama):
+  RAM Total: 16GB
+  RAM Disponível: ~12GB
+  ✅ Suficiente para Ollama
+  💰 Custo: ~2x mais caro que t3.small
+
+═══════════════════════════════════════════════════════════════
+💡 RECOMENDAÇÕES
+═══════════════════════════════════════════════════════════════
+
+PARA POC/DESENVOLVIMENTO (t3.small):
+  ✅ Use GEMINI API
+  ✅ Rápido (2-5s por request)
+  ✅ Sem problemas de RAM
+  ✅ Grátis com limites generosos
+  ✅ Melhor qualidade de resposta
+
+PARA PRODUÇÃO COM DADOS SENSÍVEIS:
+  ✅ Upgrade para t3.medium ou maior
+  ✅ Use Ollama local
+  ✅ Privacidade total
+  ❌ Mais lento (60s+ por request)
+  ❌ Custo maior de infraestrutura
+
+═══════════════════════════════════════════════════════════════
+🎯 CONCLUSÃO
+═══════════════════════════════════════════════════════════════
+
+Com t3.small, Ollama é IMPOSSÍVEL de rodar.
+
+Suas opções:
+1. ✅ Usar Gemini API (RECOMENDADO para POC)
+2. 💰 Fazer upgrade para t3.medium+ (se precisa Ollama)
+
+Para este POC, Gemini é a escolha certa:
+  - Funciona na instância atual
+  - Muito mais rápido
+  - Sem custos adicionais de infraestrutura
+  - Qualidade superior
+
+═══════════════════════════════════════════════════════════════
+✅ RESULTADO ESPERADO COM GEMINI
+═══════════════════════════════════════════════════════════════
+
+Backend logs:
+  ✅ "Initialized GeminiLLM with model=models/gemini-2.0-flash"
+  ✅ Sentinel Agent completed in ~2-3 seconds
+  ✅ All agents executing successfully
+
+API response:
+  ✅ Status 200 OK
+  ✅ Complete analysis in 10-15 seconds total
+  ✅ No timeouts or memory errors

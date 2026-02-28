@@ -1,0 +1,128 @@
+═══════════════════════════════════════════════════════════════
+🚀 MIGRAR PARA GEMINI - EXECUTAR AGORA
+═══════════════════════════════════════════════════════════════
+
+✅ SCRIPT CRIADO: switch-to-gemini.sh
+
+═══════════════════════════════════════════════════════════════
+📋 COMANDOS PARA EXECUTAR
+═══════════════════════════════════════════════════════════════
+
+# 1. Ir para o diretório do projeto
+cd ~/poc_multiagent_lang
+
+# 2. Dar permissão de execução ao script
+chmod +x switch-to-gemini.sh
+
+# 3. Executar o script
+./switch-to-gemini.sh
+
+# O script vai:
+#   ✅ Parar containers
+#   ✅ Fazer backup do .env atual
+#   ✅ Atualizar .env para Gemini
+#   ✅ Rebuild backend com fix do bug 404
+#   ✅ Subir serviços (SEM Ollama)
+#   ✅ Verificar que backend iniciou
+
+═══════════════════════════════════════════════════════════════
+🔍 APÓS EXECUTAR O SCRIPT
+═══════════════════════════════════════════════════════════════
+
+# Ver logs do backend
+docker compose logs -f backend
+
+# Deve mostrar:
+# ✅ "Initialized GeminiLLM with model=models/gemini-2.0-flash"
+# ✅ "Application startup complete"
+
+# Pressione Ctrl+C para sair dos logs
+
+# Testar API
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+✅ RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════
+
+Status: 200 OK
+Tempo: ~10-15 segundos (vs 5+ minutos no Ollama)
+
+Response JSON:
+{
+  "execution_id": "...",
+  "status": "completed",
+  "regulatory_model": {
+    "title": "RESOLUÇÃO BCB Nº 789/2024",
+    "requirements": [...],
+    "entities": [...]
+  },
+  "impacted_files": [...],
+  "impact_analysis": [...],
+  "kiro_prompt": "..."
+}
+
+═══════════════════════════════════════════════════════════════
+⚡ VANTAGENS DO GEMINI
+═══════════════════════════════════════════════════════════════
+
+✅ 20x mais rápido (2-5s vs 60s+ por request)
+✅ Sem problema de RAM (usa 500MB vs 5.5GB)
+✅ Qualidade superior de resposta
+✅ Bug 404 corrigido no código
+✅ Grátis com limites generosos
+✅ Sem download de modelos
+✅ Sem instabilidade
+
+═══════════════════════════════════════════════════════════════
+🔧 SE DER ALGUM PROBLEMA
+═══════════════════════════════════════════════════════════════
+
+# Ver logs detalhados
+docker compose logs backend | tail -100
+
+# Verificar containers rodando
+docker compose ps
+
+# Verificar .env
+cat .env
+
+# Voltar para Ollama (se necessário)
+cp .env.backup.* .env
+docker compose up -d
+
+═══════════════════════════════════════════════════════════════
+💾 LIMPAR RECURSOS DO OLLAMA (OPCIONAL)
+═══════════════════════════════════════════════════════════════
+
+Depois de confirmar que Gemini funciona, pode liberar espaço:
+
+# Remover volume do Ollama (~4GB)
+docker volume rm poc_multiagent_lang_ollama_data
+
+# Remover Ollama do host (se instalado)
+sudo systemctl stop ollama 2>/dev/null
+sudo systemctl disable ollama 2>/dev/null
+sudo rm -rf /usr/local/bin/ollama
+sudo rm -rf ~/.ollama
+
+# Limpar imagens Docker não usadas
+docker image prune -a -f
+
+═══════════════════════════════════════════════════════════════
+📊 MONITORAMENTO
+═══════════════════════════════════════════════════════════════
+
+# Ver uso de recursos
+docker stats --no-stream
+
+# Ver logs em tempo real
+docker compose logs -f
+
+# Ver apenas erros
+docker compose logs backend | grep ERROR
+
+# Verificar saúde dos serviços
+docker compose ps

@@ -1,0 +1,153 @@
+═══════════════════════════════════════════════════════════════
+🧹 LIBERAR RAM PARA OLLAMA - m7i-flex.large
+═══════════════════════════════════════════════════════════════
+
+SITUAÇÃO ATUAL:
+  RAM Total: 7.6 GiB
+  RAM Livre: 4.3 GiB
+  RAM Necessária: 5.5 GiB
+  FALTAM: 1.2 GiB
+
+═══════════════════════════════════════════════════════════════
+📋 OPÇÃO 1: LIBERAR RAM (TENTAR FAZER OLLAMA FUNCIONAR)
+═══════════════════════════════════════════════════════════════
+
+# 1. Ver o que está usando RAM
+docker stats --no-stream
+
+# 2. Parar containers
+cd ~/poc_multiagent_lang
+docker compose down
+
+# 3. Limpar cache do sistema
+sudo sync
+sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'
+
+# 4. Ver RAM livre agora
+free -h
+
+# 5. Se tiver >5.5GB livre, subir containers
+docker compose up -d
+
+# 6. Aguardar Ollama carregar modelo (pode demorar 30s)
+sleep 30
+
+# 7. Verificar logs do Ollama
+docker compose logs ollama | tail -20
+
+# 8. Se ver "model loaded successfully", testar:
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+📋 OPÇÃO 2: USAR MODELO MENOR (MAIS PROVÁVEL DE FUNCIONAR)
+═══════════════════════════════════════════════════════════════
+
+Em vez de llama2 (5.5GB RAM), use llama3.2:1b (1.3GB RAM):
+
+# 1. Parar containers
+docker compose down
+
+# 2. Editar .env
+nano .env
+
+# Mudar de:
+OLLAMA_MODEL=llama2
+
+# Para:
+OLLAMA_MODEL=llama3.2:1b
+
+# Salvar: Ctrl+O, Enter, Ctrl+X
+
+# 3. Subir containers
+docker compose up -d
+
+# 4. Aguardar e baixar modelo menor
+sleep 30
+docker compose exec ollama ollama pull llama3.2:1b
+
+# 5. Testar
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+📋 OPÇÃO 3: USAR GEMINI (MAIS RÁPIDO E CONFIÁVEL)
+═══════════════════════════════════════════════════════════════
+
+# 1. Parar containers
+docker compose down
+
+# 2. Editar .env
+nano .env
+
+# Apagar:
+LLM_TYPE=ollama
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=llama2
+
+# Adicionar:
+LLM_TYPE=gemini
+GEMINI_API_KEY=AIzaSyBVk3MFe3zRRGVMaEslphM3Vd85oS5Rz44
+GEMINI_MODEL=gemini-2.0-flash
+
+# Salvar: Ctrl+O, Enter, Ctrl+X
+
+# 3. Subir SEM Ollama (economiza RAM)
+docker compose up -d postgres backend frontend
+
+# 4. Testar (será MUITO mais rápido)
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+📊 COMPARAÇÃO DE MODELOS
+═══════════════════════════════════════════════════════════════
+
+llama2 (atual):
+  RAM: 5.5 GB
+  Qualidade: ⭐⭐⭐
+  Velocidade: 60-120s
+  Status: ❌ Não cabe na RAM disponível
+
+llama3.2:1b (alternativa):
+  RAM: 1.3 GB
+  Qualidade: ⭐⭐
+  Velocidade: 20-40s
+  Status: ✅ Deve funcionar
+
+gemini-2.0-flash (API):
+  RAM: ~500 MB
+  Qualidade: ⭐⭐⭐⭐⭐
+  Velocidade: 2-5s
+  Status: ✅ Funciona perfeitamente
+
+═══════════════════════════════════════════════════════════════
+💡 RECOMENDAÇÃO
+═══════════════════════════════════════════════════════════════
+
+MELHOR OPÇÃO: Use Gemini API
+  ✅ Qualidade superior
+  ✅ 20x mais rápido
+  ✅ Sem problemas de RAM
+  ✅ Sem problemas de setup
+
+SEGUNDA OPÇÃO: Use llama3.2:1b
+  ✅ Roda local (privacidade)
+  ✅ Cabe na RAM disponível
+  ⚠️  Qualidade inferior
+  ⚠️  Ainda lento
+
+ÚLTIMA OPÇÃO: Tentar liberar RAM para llama2
+  ⚠️  Pode não funcionar
+  ⚠️  Muito lento mesmo se funcionar
+  ⚠️  Instável (pode crashar se RAM encher)
+
+═══════════════════════════════════════════════════════════════
+🎯 DECISÃO RÁPIDA
+═══════════════════════════════════════════════════════════════
+
+Para POC/Testes: GEMINI
+Para Produção com dados sensíveis: llama3.2:1b ou upgrade de instância

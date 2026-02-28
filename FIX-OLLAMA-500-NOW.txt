@@ -1,0 +1,130 @@
+═══════════════════════════════════════════════════════════════
+🔧 FIX OLLAMA 500 ERROR - EXECUTAR AGORA
+═══════════════════════════════════════════════════════════════
+
+PROBLEMA: Ollama retorna 500 porque modelo llama2 não está baixado
+
+═══════════════════════════════════════════════════════════════
+📋 SOLUÇÃO 1: BAIXAR MODELO LLAMA2 (RECOMENDADO SE TEM ESPAÇO)
+═══════════════════════════════════════════════════════════════
+
+# 1. Verificar se modelo está baixado
+docker compose exec ollama ollama list
+
+# Se retornar vazio ou não mostrar llama2:
+
+# 2. Baixar modelo llama2 (~4GB, demora 5-10 min)
+docker compose exec ollama ollama pull llama2
+
+# 3. Aguardar download completar e verificar
+docker compose exec ollama ollama list
+
+# Deve mostrar:
+# NAME            ID              SIZE    MODIFIED
+# llama2:latest   78e26419b446    3.8 GB  X minutes ago
+
+# 4. Testar Ollama diretamente
+docker compose exec ollama ollama run llama2 "Hello, how are you?"
+
+# 5. Testar API
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+📋 SOLUÇÃO 2: USAR GEMINI (MAIS RÁPIDO, SEM DOWNLOAD)
+═══════════════════════════════════════════════════════════════
+
+Se não tem espaço ou quer algo mais rápido:
+
+# 1. Parar containers
+cd ~/poc_multiagent_lang
+docker compose down
+
+# 2. Editar .env
+nano .env
+
+# Apagar estas linhas:
+LLM_TYPE=ollama
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=llama2
+
+# Adicionar estas linhas:
+LLM_TYPE=gemini
+GEMINI_API_KEY=AIzaSyBVk3MFe3zRRGVMaEslphM3Vd85oS5Rz44
+GEMINI_MODEL=gemini-2.0-flash
+
+# Salvar: Ctrl+O, Enter, Ctrl+X
+
+# 3. Subir apenas serviços necessários (sem Ollama)
+docker compose up -d postgres backend frontend
+
+# 4. Ver logs
+docker compose logs -f backend
+
+# 5. Testar (deve ser MUITO mais rápido)
+curl -X POST http://localhost:8000/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"regulatory_text":"RESOLUÇÃO BCB Nº 789/2024","repo_path":"/app/fake_pix_repo"}'
+
+═══════════════════════════════════════════════════════════════
+⚡ COMPARAÇÃO DE PERFORMANCE
+═══════════════════════════════════════════════════════════════
+
+OLLAMA (llama2 local):
+  ⏱️  Tempo por request: 60-120 segundos
+  💾 Espaço em disco: ~4GB
+  🧠 RAM necessária: ~2-4GB
+  📦 Setup: Precisa baixar modelo
+  💰 Custo: Grátis
+  🔒 Privacidade: Total (dados não saem do servidor)
+
+GEMINI (API):
+  ⏱️  Tempo por request: 2-5 segundos (20x mais rápido!)
+  💾 Espaço em disco: 0
+  🧠 RAM necessária: 0
+  📦 Setup: Apenas API key
+  💰 Custo: Grátis (com limites generosos)
+  🔒 Privacidade: Dados vão para Google
+
+═══════════════════════════════════════════════════════════════
+💡 RECOMENDAÇÃO
+═══════════════════════════════════════════════════════════════
+
+Para POC/Testes: USE GEMINI
+  ✅ 20x mais rápido
+  ✅ Sem problemas de espaço
+  ✅ Sem download
+  ✅ Melhor qualidade de resposta
+
+Para Produção com dados sensíveis: USE OLLAMA
+  ✅ Privacidade total
+  ✅ Sem custos de API
+  ❌ Precisa servidor maior (t3.medium+)
+  ❌ Muito mais lento
+
+═══════════════════════════════════════════════════════════════
+🔍 VERIFICAR ESPAÇO DISPONÍVEL
+═══════════════════════════════════════════════════════════════
+
+# Ver espaço em disco
+df -h
+
+# Se tiver menos de 5GB livres, use GEMINI
+# Se tiver mais de 5GB livres, pode usar OLLAMA
+
+═══════════════════════════════════════════════════════════════
+❓ QUAL ESCOLHER?
+═══════════════════════════════════════════════════════════════
+
+Escolha GEMINI se:
+  - Quer testar rápido
+  - Tem pouco espaço em disco (<5GB livre)
+  - Quer respostas mais rápidas
+  - Não tem dados super sensíveis
+
+Escolha OLLAMA se:
+  - Tem dados muito sensíveis
+  - Tem espaço em disco (>5GB livre)
+  - Pode esperar 60s+ por resposta
+  - Quer evitar custos de API no futuro
